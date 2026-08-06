@@ -2,7 +2,10 @@
   "compilerOptions": {
     /* Language */
     "target": "ES2022",
-    "lib": ["ES2022"],
+     "lib": [
+      "ES2022",
+      "DOM"
+    ],
 
     /* Modules */
     "module": "ESNext",
@@ -10,6 +13,7 @@
 
     /* Type Checking */
     "strict": true,
+    "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
