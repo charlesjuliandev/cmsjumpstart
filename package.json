@@ -2,17 +2,19 @@
   "name": "cmsjumpstart",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.20.0",
   "description": "Production-ready starters for headless CMS platforms",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@11.20.0",
+
   "scripts": {
     "build": "pnpm -r build",
+    "clean": "pnpm -r clean",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "clean": "pnpm -r clean",
     "typecheck": "pnpm -r exec tsc --noEmit"
   },
+
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
@@ -20,10 +22,12 @@
       "onFail": "download"
     }
   },
+
   "engines": {
     "node": ">=22",
     "pnpm": ">=11"
   },
+
   "devDependencies": {
     "typescript": "5.9.3",
     "vitest": "^4.1.10"
