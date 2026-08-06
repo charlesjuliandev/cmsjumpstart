@@ -1,7 +1,7 @@
 {
-  "name": "@cmsjumpstart/core",
+  "name": "@cmsjumpstart/drupal",
   "version": "0.1.0",
-  "description": "Core utilities for CMSJumpstart",
+  "description": "Drupal integration for CMSJumpstart",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,9 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "pnpm clean && tsc"
+  },
+  "dependencies": {
+    "@cmsjumpstart/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
