@@ -30,4 +30,5 @@ describe("DrupalQuerySerializer", () => {
         "include=field_image&sort=-created&page%5Boffset%5D=10&page%5Blimit%5D=10&filter%5Bstatus%5D=true"
       );
   });
+  
 });
