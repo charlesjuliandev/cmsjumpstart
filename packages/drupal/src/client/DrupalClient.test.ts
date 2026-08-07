@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { DrupalClient } from "./DrupalClient";
-import { RequestExecutor } from "../executor/RequestExecutor";
+import type { RequestExecutor } from "../executor/RequestExecutor";
 
 describe("DrupalClient", () => {
   it("creates a Drupal resource", () => {
@@ -17,30 +17,31 @@ describe("DrupalClient", () => {
   });
 
   it("uses an injected request executor", async () => {
-    const response = {
-      data: []
-    };
-
     const executor = {
-      get: vi.fn().mockResolvedValue(response)
-    };
+      get: vi.fn().mockResolvedValue({
+        data: []
+      })
+    } as unknown as RequestExecutor;
 
     const client = new DrupalClient(
       {
         baseUrl: "https://example.com"
       },
-      executor as unknown as RequestExecutor
+      executor
     );
 
-    const result = await client
-      .resource("node--page")
-      .limit(10)
-      .get();
+    const result =
+      await client
+        .resource("node--page")
+        .limit(10)
+        .get();
 
     expect(executor.get)
       .toHaveBeenCalledTimes(1);
 
     expect(result)
-      .toEqual(response);
+      .toEqual({
+        data: []
+      });
   });
 });

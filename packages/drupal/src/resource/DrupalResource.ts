@@ -9,11 +9,13 @@ export class DrupalResource {
     private readonly resourceType: string,
     private readonly executor?: RequestExecutor
   ) {
-    this.query = DrupalQueryBuilder.create(resourceType);
+    this.query =
+      DrupalQueryBuilder.create(resourceType);
   }
 
   include(...fields: string[]) {
-    this.query = this.query.include(...fields);
+    this.query =
+      this.query.include(...fields);
 
     return this;
   }
@@ -22,28 +24,32 @@ export class DrupalResource {
     field: string,
     value: string | number | boolean
   ) {
-    this.query = this.query.filter(
-      field,
-      value
-    );
+    this.query =
+      this.query.filter(
+        field,
+        value
+      );
 
     return this;
   }
 
   sort(...fields: string[]) {
-    this.query = this.query.sort(...fields);
+    this.query =
+      this.query.sort(...fields);
 
     return this;
   }
 
   page(number: number) {
-    this.query = this.query.page(number);
+    this.query =
+      this.query.page(number);
 
     return this;
   }
 
   limit(number: number) {
-    this.query = this.query.limit(number);
+    this.query =
+      this.query.limit(number);
 
     return this;
   }
@@ -60,11 +66,20 @@ export class DrupalResource {
     }
 
     const params =
-      DrupalQuerySerializer.serialize(this.query);
+      DrupalQuerySerializer.serialize(
+        this.query
+      );
 
     return this.executor.get<T>(
-      `/jsonapi/${this.resourceType}`,
+      `/jsonapi/${this.getEndpoint()}`,
       params
+    );
+  }
+
+  private getEndpoint() {
+    return this.resourceType.replace(
+      "--",
+      "/"
     );
   }
 }
