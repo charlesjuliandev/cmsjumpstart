@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { RequestExecutor } from "./RequestExecutor";
+import { BasicAuth } from "../auth/BasicAuth";
 
 describe("RequestExecutor", () => {
   it("executes a GET request", async () => {
@@ -44,24 +45,51 @@ describe("RequestExecutor", () => {
   });
 
   it("throws when the request fails", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: false,
-      status: 404
-    })
-  );
+    vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404
+        })
+    );
 
-  const executor = new RequestExecutor({
-    baseUrl: "https://example.com"
+    const executor = new RequestExecutor({
+        baseUrl: "https://example.com"
+    });
+
+    await expect(
+        executor.get("/jsonapi/node/page")
+    ).rejects.toThrow(
+        "Request failed with status 404"
+    );
+
+    vi.unstubAllGlobals();
   });
 
-  await expect(
-    executor.get("/jsonapi/node/page")
-  ).rejects.toThrow(
-    "Request failed with status 404"
-  );
+ it("adds basic authentication headers", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({})
+    });
 
-  vi.unstubAllGlobals();
-});
+    const executor = new RequestExecutor({
+        baseUrl: "https://example.com",
+        auth: new BasicAuth(
+        "username",
+        "password"
+        )
+    });
+
+    await executor.get("/jsonapi/node/page");
+
+    expect(fetch).toHaveBeenCalledWith(
+        expect.any(URL),
+        expect.objectContaining({
+        headers: expect.objectContaining({
+            Authorization:
+            "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+        })
+        })
+    );
+    });
 });

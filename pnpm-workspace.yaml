@@ -2,3 +2,5 @@ packages:
   - "packages/*"
   - "examples/*"
   - "website"
+allowBuilds:
+  esbuild: true
