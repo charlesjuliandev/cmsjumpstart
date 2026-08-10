@@ -92,4 +92,42 @@ describe("RequestExecutor", () => {
         })
     );
     });
+  it("returns a typed Drupal response", async () => {
+      const responseData = {
+        jsonapi: {
+          version: "1.0"
+        },
+
+        data: [
+          {
+            type: "node--page",
+            id: "123",
+
+            attributes: {
+              title: "Test Page"
+            }
+          }
+        ]
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: vi.fn().mockResolvedValue(responseData)
+        })
+      );
+
+      const executor = new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+      const response = await executor.get<{
+        title: string;
+      }>("/jsonapi/node/page");
+
+      expect(response.data[0].attributes.title).toBe(
+        "Test Page"
+      );
+  });
 });
