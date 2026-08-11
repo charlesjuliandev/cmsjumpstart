@@ -1,8 +1,18 @@
 import { DrupalQueryBuilder } from "../query/DrupalQueryBuilder";
 import { DrupalQuerySerializer } from "../query/DrupalQuerySerializer";
 import { RequestExecutor } from "../executor/RequestExecutor";
+import type {
+  DrupalJsonApiRelationship,
+  DrupalResponse
+} from "../types/DrupalResponse";
 
-export class DrupalResource {
+export class DrupalResource<
+  TAttributes = Record<string, unknown>,
+  TRelationships = Record<
+    string,
+    DrupalJsonApiRelationship
+  >
+> {
   private query: DrupalQueryBuilder;
 
   constructor(
@@ -58,7 +68,12 @@ export class DrupalResource {
     return this.query;
   }
 
-  async get<T>() {
+  async get(): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    >
+  > {
     if (!this.executor) {
       throw new Error(
         "DrupalResource requires a RequestExecutor to execute requests."
@@ -70,7 +85,10 @@ export class DrupalResource {
         this.query
       );
 
-    return this.executor.get<T>(
+    return this.executor.get<
+      TAttributes,
+      TRelationships
+    >(
       `/jsonapi/${this.getEndpoint()}`,
       params
     );

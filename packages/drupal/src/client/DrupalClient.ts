@@ -2,6 +2,9 @@ import type { DrupalClientConfig } from "../types/DrupalClientConfig";
 import { DrupalResource } from "../resource/DrupalResource";
 import { RequestExecutor } from "../executor/RequestExecutor";
 import { encodeBase64 } from "../utils/base64";
+import type {
+  DrupalJsonApiRelationship
+} from "../types/DrupalResponse";
 
 export class DrupalClient {
   private readonly executor: RequestExecutor;
@@ -18,10 +21,19 @@ export class DrupalClient {
       });
   }
 
-  resource(
+  resource<
+    TAttributes = Record<string, unknown>,
+    TRelationships = Record<
+      string,
+      DrupalJsonApiRelationship
+    >
+  >(
     resourceType: string
   ) {
-    return new DrupalResource(
+    return new DrupalResource<
+      TAttributes,
+      TRelationships
+    >(
       resourceType,
       this.executor
     );
@@ -40,7 +52,8 @@ export class DrupalClient {
     switch (this.config.auth.type) {
       case "api-key":
         headers[
-          this.config.auth.header ?? "Authorization"
+          this.config.auth.header ??
+            "Authorization"
         ] = this.config.auth.key;
         break;
 

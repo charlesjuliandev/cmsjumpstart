@@ -1,5 +1,6 @@
 import type { DrupalResponse } from "../types";
 import type { AuthProvider } from "../auth/AuthProvider";
+import type { DrupalJsonApiRelationship } from "../types/DrupalResponse";
 
 export interface RequestExecutorOptions {
   baseUrl: string;
@@ -25,11 +26,25 @@ export class RequestExecutor {
     return { ...this.headers };
   }
 
-  async get<T>(
+  async get<
+    TAttributes = Record<string, unknown>,
+    TRelationships = Record<
+      string,
+      DrupalJsonApiRelationship
+    >
+  >(
     path: string,
     params?: URLSearchParams
-  ): Promise<DrupalResponse<T>> {
-    const url = new URL(path, `${this.baseUrl}/`);
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    >
+  > {
+    const url = new URL(
+      path,
+      `${this.baseUrl}/`
+    );
 
     if (params) {
       url.search = params.toString();
@@ -46,6 +61,11 @@ export class RequestExecutor {
       );
     }
 
-    return response.json() as Promise<DrupalResponse<T>>;
+    return response.json() as Promise<
+      DrupalResponse<
+        TAttributes,
+        TRelationships
+      >
+    >;
   }
 }
