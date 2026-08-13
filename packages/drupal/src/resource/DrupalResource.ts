@@ -1,6 +1,19 @@
-import { DrupalQueryBuilder } from "../query/DrupalQueryBuilder";
-import { DrupalQuerySerializer } from "../query/DrupalQuerySerializer";
-import { RequestExecutor } from "../executor/RequestExecutor";
+import {
+  DrupalQueryBuilder
+} from "../query/DrupalQueryBuilder";
+
+import {
+  DrupalQuerySerializer
+} from "../query/DrupalQuerySerializer";
+
+import type {
+  DrupalFilterOperator
+} from "../query/types";
+
+import {
+  RequestExecutor
+} from "../executor/RequestExecutor";
+
 import type {
   DrupalJsonApiRelationship,
   DrupalResponse
@@ -33,12 +46,37 @@ export class DrupalResource<
   filter(
     field: string,
     value: string | number | boolean
-  ) {
+  ): this;
+
+  filter(
+    field: string,
+    operator: DrupalFilterOperator,
+    value: string | number | boolean
+  ): this;
+
+  filter(
+    field: string,
+    operatorOrValue:
+      | DrupalFilterOperator
+      | string
+      | number
+      | boolean,
+    value?: string | number | boolean
+  ): this {
     this.query =
-      this.query.filter(
-        field,
-        value
-      );
+      value === undefined
+        ? this.query.filter(
+            field,
+            operatorOrValue as
+              | string
+              | number
+              | boolean
+          )
+        : this.query.filter(
+            field,
+            operatorOrValue as DrupalFilterOperator,
+            value
+          );
 
     return this;
   }

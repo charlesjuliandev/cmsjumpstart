@@ -1,6 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
-import { DrupalResource } from "./DrupalResource";
-import { RequestExecutor } from "../executor/RequestExecutor";
+import {
+  describe,
+  expect,
+  it,
+  vi
+} from "vitest";
+
+import {
+  DrupalResource
+} from "./DrupalResource";
+
+import {
+  RequestExecutor
+} from "../executor/RequestExecutor";
 
 describe("DrupalResource", () => {
   it("creates a resource query", () => {
@@ -46,6 +57,67 @@ describe("DrupalResource", () => {
 
     expect(options.limit)
       .toBe(10);
+  });
+
+  it("supports comparison filters", () => {
+    const resource =
+      new DrupalResource("node--event");
+
+    resource.filter(
+      "field_date.value",
+      ">=",
+      "2026-08-13"
+    );
+
+    const options =
+      resource
+        .getQuery()
+        .getOptions();
+
+    expect(options.filters)
+      .toEqual([
+        {
+          field: "field_date.value",
+          operator: ">=",
+          value: "2026-08-13"
+        }
+      ]);
+  });
+
+  it("supports multiple comparison filters", () => {
+    const resource =
+      new DrupalResource("node--event");
+
+    resource
+      .filter(
+        "field_date.value",
+        ">=",
+        "2026-08-13"
+      )
+      .filter(
+        "field_date.value",
+        "<=",
+        "2026-08-31"
+      );
+
+    const options =
+      resource
+        .getQuery()
+        .getOptions();
+
+    expect(options.filters)
+      .toEqual([
+        {
+          field: "field_date.value",
+          operator: ">=",
+          value: "2026-08-13"
+        },
+        {
+          field: "field_date.value",
+          operator: "<=",
+          value: "2026-08-31"
+        }
+      ]);
   });
 
   it("executes a Drupal JSON:API request", async () => {

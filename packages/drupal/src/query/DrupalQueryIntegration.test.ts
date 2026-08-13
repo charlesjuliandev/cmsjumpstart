@@ -1,98 +1,194 @@
 import { loadEnvFile } from "node:process";
 import { describe, expect, it } from "vitest";
+import { DrupalClient } from "../client/DrupalClient";
 import { DrupalQueryBuilder } from "./DrupalQueryBuilder";
 import { DrupalQuerySerializer } from "./DrupalQuerySerializer";
 
 loadEnvFile(".env.local");
 
 const drupalUrl = process.env.DRUPAL_URL;
-const drupalUsername = process.env.DRUPAL_USERNAME;
-const drupalPassword = process.env.DRUPAL_PASSWORD;
+const httpAuthUsername =
+  process.env.HTAUTH_U;
+const httpAuthPassword =
+  process.env.HTAUTH_P;
+const consumerId =
+  process.env.CONSUMERUUID;
+const apiKey =
+  process.env.UP_API_KEY;
 
 describe("Drupal JSON:API integration", () => {
-  it("fetches upcoming events using a date comparison filter", async () => {
+  const createTestClient = () => {
     if (
       !drupalUrl ||
-      !drupalUsername ||
-      !drupalPassword
+      !httpAuthUsername ||
+      !httpAuthPassword ||
+      !consumerId ||
+      !apiKey
     ) {
       throw new Error(
-        "Missing DRUPAL_URL, DRUPAL_USERNAME, or DRUPAL_PASSWORD environment variables."
+        "Missing DRUPAL_URL, HTHAUTH_U, HTHAUTH_P, CONSUMERUUID, or UP_API_KEY environment variables."
       );
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todayIso = today.toISOString();
-
-    const query = DrupalQueryBuilder
-      .create("node--event")
-      .filter(
-        "field_date.value",
-        ">=",
-        todayIso
-      )
-      .sort("field_date.value")
-      .limit(5);
-
-    const params =
-      DrupalQuerySerializer.serialize(query);
-
-    const url = new URL(
-      "/jsonapi/node/event",
-      `${drupalUrl.replace(/\/$/, "")}/`
-    );
-
-    url.search = params.toString();
-
-    const credentials = Buffer
-      .from(
-        `${drupalUsername}:${drupalPassword}`
-      )
-      .toString("base64");
-
-    const response = await fetch(url, {
-      method: "GET",
+    return new DrupalClient({
+      baseUrl: drupalUrl,
+      auth: {
+        type: "basic",
+        username: httpAuthUsername,
+        password: httpAuthPassword
+      },
       headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Basic ${credentials}`
+        "X-Consumer-ID": consumerId,
+        "api-key": apiKey
       }
     });
+  };
 
-    const responseBody =
-      await response.text();
+  it(
+    "fetches upcoming events using a date comparison filter",
+    async () => {
+      const client =
+        createTestClient();
 
-    console.log("\nDrupal integration test:");
-    console.log("Status:", response.status);
-    console.log("Status text:", response.statusText);
-    console.log("URL:", url.toString());
-    console.log("Response:", responseBody);
+      const today = new Date();
 
-    expect(response.ok).toBe(true);
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      );
 
-    const body =
-      JSON.parse(responseBody);
+      const todayIso =
+        today.toISOString();
 
-    expect(body).toHaveProperty("data");
-    expect(Array.isArray(body.data)).toBe(true);
-  });
+      const query =
+        DrupalQueryBuilder
+          .create("node--event")
+          .filter(
+            "field_date.value",
+            ">=",
+            todayIso
+          )
+          .sort(
+            "field_date.value"
+          )
+          .limit(5);
 
-  it("serializes comparison filters using Drupal condition syntax", () => {
-    const query =
-      DrupalQueryBuilder
-        .create("node--event")
-        .filter(
-          "field_date.value",
-          ">=",
-          "2026-08-13"
-        );
+      const params =
+        DrupalQuerySerializer
+          .serialize(query);
 
-    const params =
-      DrupalQuerySerializer.serialize(query);
+      const response =
+        await client
+          .resource("node--event")
+          .filter(
+            "field_date.value",
+            ">=",
+            todayIso
+          )
+          .sort(
+            "field_date.value"
+          )
+          .limit(5)
+          .get();
 
-    expect(params.toString()).toBe(
-      "filter%5Bcondition_0%5D%5Bcondition%5D%5Bpath%5D=field_date.value&filter%5Bcondition_0%5D%5Bcondition%5D%5Boperator%5D=%3E%3D&filter%5Bcondition_0%5D%5Bcondition%5D%5Bvalue%5D=2026-08-13"
-    );
-  });
+      console.log(
+        "\nDrupal integration test:"
+      );
+
+      console.log(
+        "Today:",
+        todayIso
+      );
+
+      console.log(
+        "Upcoming events:",
+        response.data.length
+      );
+
+      console.log(
+        "Response:",
+        JSON.stringify(
+          response,
+          null,
+          2
+        )
+      );
+
+      expect(response)
+        .toHaveProperty("data");
+
+      expect(
+        Array.isArray(
+          response.data
+        )
+      ).toBe(true);
+    }
+  );
+
+  it(
+    "serializes comparison filters using Drupal condition syntax",
+    () => {
+      const query =
+        DrupalQueryBuilder
+          .create("node--event")
+          .filter(
+            "field_date.value",
+            ">=",
+            "2026-08-13"
+          );
+
+      const params =
+        DrupalQuerySerializer
+          .serialize(query);
+
+      expect(
+        params.toString()
+      ).toBe(
+        "filter%5Bcondition_0%5D%5Bcondition%5D%5Bpath%5D=field_date.value&filter%5Bcondition_0%5D%5Bcondition%5D%5Boperator%5D=%3E%3D&filter%5Bcondition_0%5D%5Bcondition%5D%5Bvalue%5D=2026-08-13"
+      );
+    }
+  );
+
+  it(
+    "retrieves the Drupal event collection without filters",
+    async () => {
+      const client =
+        createTestClient();
+
+      const response =
+        await client
+          .resource("node--event")
+          .limit(5)
+          .get();
+
+      console.log(
+        "\nDrupal event collection:"
+      );
+
+      console.log(
+        "Event count:",
+        response.data.length
+      );
+
+      console.log(
+        "Response:",
+        JSON.stringify(
+          response,
+          null,
+          2
+        )
+      );
+
+      expect(response)
+        .toHaveProperty("data");
+
+      expect(
+        Array.isArray(
+          response.data
+        )
+      ).toBe(true);
+    }
+  );
 });
