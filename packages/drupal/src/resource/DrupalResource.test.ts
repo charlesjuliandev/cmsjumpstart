@@ -33,9 +33,13 @@ describe("DrupalResource", () => {
       .toEqual(["field_image"]);
 
     expect(options.filters)
-      .toEqual({
-        status: true
-      });
+      .toEqual([
+        {
+          field: "status",
+          operator: "=",
+          value: true
+        }
+      ]);
 
     expect(options.sort)
       .toEqual(["-created"]);
@@ -71,5 +75,45 @@ describe("DrupalResource", () => {
 
     expect(params)
       .toBeInstanceOf(URLSearchParams);
+  });
+
+  it("supports typed Drupal resource attributes", async () => {
+    const executor = {
+      get: vi.fn().mockResolvedValue({
+        jsonapi: {
+          version: "1.0"
+        },
+        data: [
+          {
+            type: "node--page",
+            id: "123",
+            attributes: {
+              title: "Test Page",
+              status: true
+            }
+          }
+        ]
+      })
+    } as unknown as RequestExecutor;
+
+    const resource =
+      new DrupalResource<{
+        title: string;
+        status: boolean;
+      }>(
+        "node--page",
+        executor
+      );
+
+    const response =
+      await resource.get();
+
+    expect(
+      response.data[0].attributes.title
+    ).toBe("Test Page");
+
+    expect(
+      response.data[0].attributes.status
+    ).toBe(true);
   });
 });

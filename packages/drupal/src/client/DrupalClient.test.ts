@@ -68,4 +68,49 @@ describe("DrupalClient", () => {
       "api-key": "api-key-value"
     });
   });
+
+  it("supports typed Drupal resources", async () => {
+    const executor = {
+      get: vi.fn().mockResolvedValue({
+        jsonapi: {
+          version: "1.0"
+        },
+
+        data: [
+          {
+            type: "node--page",
+            id: "123",
+            attributes: {
+              title: "Test Page",
+              status: true
+            }
+          }
+        ]
+      })
+    } as unknown as RequestExecutor;
+
+    const client =
+      new DrupalClient(
+        {
+          baseUrl: "https://example.com"
+        },
+        executor
+      );
+
+    const response = await client
+      .resource<{
+        title: string;
+        status: boolean;
+      }>("node--page")
+      .get();
+
+    expect(response.data[0].attributes.title)
+      .toBe("Test Page");
+
+    expect(response.data[0].attributes.status)
+      .toBe(true);
+
+    expect(executor.get)
+      .toHaveBeenCalledTimes(1);
+  });
 });

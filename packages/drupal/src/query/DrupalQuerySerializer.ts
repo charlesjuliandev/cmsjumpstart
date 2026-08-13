@@ -38,14 +38,37 @@ export class DrupalQuerySerializer {
       );
     }
 
-    if (options.filters) {
-      Object.entries(options.filters)
-        .forEach(([key, value]) => {
+    if (options.filters?.length) {
+      options.filters.forEach(
+        ({ field, operator, value }, index) => {
+          if (operator === "=") {
+            params.set(
+              `filter[${field}]`,
+              String(value)
+            );
+
+            return;
+          }
+
+          const conditionPrefix =
+            `filter[condition_${index}][condition]`;
+
           params.set(
-            `filter[${key}]`,
+            `${conditionPrefix}[path]`,
+            field
+          );
+
+          params.set(
+            `${conditionPrefix}[operator]`,
+            operator
+          );
+
+          params.set(
+            `${conditionPrefix}[value]`,
             String(value)
           );
-        });
+        }
+      );
     }
 
     return params;

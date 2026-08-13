@@ -1,4 +1,7 @@
-import type { DrupalQueryOptions } from "./types";
+import type {
+  DrupalFilterOperator,
+  DrupalQueryOptions
+} from "./types";
 
 export class DrupalQueryBuilder {
   private constructor(
@@ -26,15 +29,39 @@ export class DrupalQueryBuilder {
   filter(
     field: string,
     value: string | number | boolean
+  ): DrupalQueryBuilder;
+
+  filter(
+    field: string,
+    operator: DrupalFilterOperator,
+    value: string | number | boolean
+  ): DrupalQueryBuilder;
+
+  filter(
+    field: string,
+    operatorOrValue: DrupalFilterOperator | string | number | boolean,
+    value?: string | number | boolean
   ) {
+    const operator =
+      value === undefined ? "=" : operatorOrValue as DrupalFilterOperator;
+
+    const filterValue =
+      value === undefined
+        ? operatorOrValue as string | number | boolean
+        : value;
+
     return new DrupalQueryBuilder(
       this.resourceType,
       {
         ...this.options,
-        filters: {
-          ...(this.options.filters ?? {}),
-          [field]: value
-        }
+        filters: [
+          ...(this.options.filters ?? []),
+          {
+            field,
+            operator,
+            value: filterValue
+          }
+        ]
       }
     );
   }
