@@ -210,6 +210,171 @@ describe("DrupalResource", () => {
     );
   });
 
+  it("fetches the next page", async () => {
+    const nextResponse = {
+      jsonapi: {
+        version: "1.0"
+      },
+      data: []
+    };
+
+    const executor = {
+      get: vi.fn().mockResolvedValue(
+        nextResponse
+      ),
+      getNext: vi.fn().mockResolvedValue(
+        nextResponse
+      )
+    };
+
+    const resource =
+      new DrupalResource(
+        "node--event",
+        executor as unknown as RequestExecutor
+      );
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+      data: [],
+      links: {
+        next: {
+          href:
+            "https://example.com/jsonapi/node/event?page[offset]=10"
+        }
+      }
+    };
+
+    const result =
+      await resource.next(response);
+
+    expect(
+      executor.getNext
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      executor.getNext
+    ).toHaveBeenCalledWith(
+      response
+    );
+
+    expect(result)
+      .toEqual(nextResponse);
+  });
+
+  it("returns null when there is no next page", async () => {
+    const executor = {
+      getNext: vi.fn().mockResolvedValue(null)
+    };
+
+    const resource =
+      new DrupalResource(
+        "node--event",
+        executor as unknown as RequestExecutor
+      );
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+      data: []
+    };
+
+    const result =
+      await resource.next(response);
+
+    expect(
+      executor.getNext
+    ).toHaveBeenCalledWith(
+      response
+    );
+
+    expect(result)
+      .toBeNull();
+  });
+
+  it("fetches the previous page", async () => {
+    const previousResponse = {
+      jsonapi: {
+        version: "1.0"
+      },
+      data: []
+    };
+
+    const executor = {
+      getPrevious: vi.fn().mockResolvedValue(
+        previousResponse
+      )
+    };
+
+    const resource =
+      new DrupalResource(
+        "node--event",
+        executor as unknown as RequestExecutor
+      );
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+      data: [],
+      links: {
+        prev: {
+          href:
+            "https://example.com/jsonapi/node/event?page[offset]=0"
+        }
+      }
+    };
+
+    const result =
+      await resource.previous(response);
+
+    expect(
+      executor.getPrevious
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      executor.getPrevious
+    ).toHaveBeenCalledWith(
+      response
+    );
+
+    expect(result)
+      .toEqual(previousResponse);
+  });
+
+  it("returns null when there is no previous page", async () => {
+    const executor = {
+      getPrevious: vi.fn().mockResolvedValue(null)
+    };
+
+    const resource =
+      new DrupalResource(
+        "node--event",
+        executor as unknown as RequestExecutor
+      );
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+      data: []
+    };
+
+    const result =
+      await resource.previous(response);
+
+    expect(
+      executor.getPrevious
+    ).toHaveBeenCalledWith(
+      response
+    );
+
+    expect(result)
+      .toBeNull();
+  });
+
   it("supports typed Drupal resource attributes", async () => {
     const executor = {
       get: vi.fn().mockResolvedValue({

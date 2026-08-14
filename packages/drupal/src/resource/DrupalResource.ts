@@ -139,6 +139,52 @@ export class DrupalResource<
     );
   }
 
+  async next(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    > | null
+  > {
+    if (!this.executor) {
+      throw new Error(
+        "DrupalResource requires a RequestExecutor to execute requests."
+      );
+    }
+
+    return this.executor.getNext<
+      TAttributes,
+      TRelationships
+    >(response);
+  }
+
+  async previous(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    > | null
+  > {
+    if (!this.executor) {
+      throw new Error(
+        "DrupalResource requires a RequestExecutor to execute requests."
+      );
+    }
+
+    return this.executor.getPrevious<
+      TAttributes,
+      TRelationships
+    >(response);
+  }
+
   private getEndpoint() {
     return this.resourceType.replace(
       "--",
