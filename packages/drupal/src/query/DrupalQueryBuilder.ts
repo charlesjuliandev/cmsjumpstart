@@ -26,6 +26,16 @@ export class DrupalQueryBuilder {
     );
   }
 
+  fields(...fields: string[]) {
+    return new DrupalQueryBuilder(
+      this.resourceType,
+      {
+        ...this.options,
+        fields
+      }
+    );
+  }
+
   filter(
     field: string,
     value: string | number | boolean
@@ -39,15 +49,22 @@ export class DrupalQueryBuilder {
 
   filter(
     field: string,
-    operatorOrValue: DrupalFilterOperator | string | number | boolean,
+    operatorOrValue:
+      | DrupalFilterOperator
+      | string
+      | number
+      | boolean,
     value?: string | number | boolean
   ) {
     const operator =
-      value === undefined ? "=" : operatorOrValue as DrupalFilterOperator;
+      value === undefined
+        ? "="
+        : operatorOrValue as DrupalFilterOperator;
 
     const filterValue =
       value === undefined
-        ? operatorOrValue as string | number | boolean
+        ? operatorOrValue as
+            string | number | boolean
         : value;
 
     return new DrupalQueryBuilder(

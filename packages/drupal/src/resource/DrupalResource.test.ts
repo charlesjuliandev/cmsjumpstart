@@ -120,6 +120,26 @@ describe("DrupalResource", () => {
       ]);
   });
 
+  it("supports pagination", () => {
+    const resource =
+      new DrupalResource("node--page");
+
+    resource
+      .page(2)
+      .limit(10);
+
+    const options =
+      resource
+        .getQuery()
+        .getOptions();
+
+    expect(options.page)
+      .toBe(2);
+
+    expect(options.limit)
+      .toBe(10);
+  });
+
   it("executes a Drupal JSON:API request", async () => {
     const executor = {
       get: vi.fn().mockResolvedValue({
@@ -134,6 +154,7 @@ describe("DrupalResource", () => {
       );
 
     await resource
+      .page(2)
       .limit(10)
       .get();
 
@@ -147,6 +168,14 @@ describe("DrupalResource", () => {
 
     expect(params)
       .toBeInstanceOf(URLSearchParams);
+
+    expect(
+      params.get("page[offset]")
+    ).toBe("20");
+
+    expect(
+      params.get("page[limit]")
+    ).toBe("10");
   });
 
   it("supports typed Drupal resource attributes", async () => {

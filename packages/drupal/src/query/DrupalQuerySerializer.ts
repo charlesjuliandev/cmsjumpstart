@@ -1,4 +1,6 @@
-import type { DrupalQueryBuilder } from "./DrupalQueryBuilder";
+import type {
+  DrupalQueryBuilder
+} from "./DrupalQueryBuilder";
 
 export class DrupalQuerySerializer {
   static serialize(
@@ -12,6 +14,13 @@ export class DrupalQuerySerializer {
       params.set(
         "include",
         options.includes.join(",")
+      );
+    }
+
+    if (options.fields?.length) {
+      params.set(
+        `fields[${query.getResourceType()}]`,
+        options.fields.join(",")
       );
     }
 

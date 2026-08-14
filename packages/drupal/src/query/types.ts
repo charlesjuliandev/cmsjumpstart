@@ -15,6 +15,8 @@ export interface DrupalFilter {
 export interface DrupalQueryOptions {
   includes?: string[];
 
+  fields?: string[];
+
   filters?: DrupalFilter[];
 
   sort?: string[];

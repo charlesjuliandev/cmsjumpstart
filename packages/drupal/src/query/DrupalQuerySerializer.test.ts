@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import {
+  describe,
+  expect,
+  it
+} from "vitest";
+
 import {
   DrupalQueryBuilder
 } from "./DrupalQueryBuilder";
@@ -25,6 +30,28 @@ describe("DrupalQuerySerializer", () => {
       .toBe(
         "include=field_image&sort=-created&page%5Boffset%5D=10&page%5Blimit%5D=10&filter%5Bstatus%5D=true"
       );
+  });
+
+  it("serializes sparse fieldsets", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--event")
+        .fields(
+          "title",
+          "field_date",
+          "field_image"
+        );
+
+    const params =
+      DrupalQuerySerializer.serialize(query);
+
+    expect(
+      params.get(
+        "fields[node--event]"
+      )
+    ).toBe(
+      "title,field_date,field_image"
+    );
   });
 
   it("serializes comparison filters", () => {
