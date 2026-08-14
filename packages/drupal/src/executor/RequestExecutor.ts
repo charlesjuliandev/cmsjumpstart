@@ -1,6 +1,9 @@
 import type { DrupalResponse } from "../types";
 import type { AuthProvider } from "../auth/AuthProvider";
-import type { DrupalJsonApiRelationship } from "../types/DrupalResponse";
+import type {
+  DrupalJsonApiRelationship,
+  DrupalJsonApiLink
+} from "../types/DrupalResponse";
 
 export interface RequestExecutorOptions {
   baseUrl: string;
@@ -41,14 +44,7 @@ export class RequestExecutor {
       TRelationships
     >
   > {
-    const url = new URL(
-      path,
-      `${this.baseUrl}/`
-    );
-
-    if (params) {
-      url.search = params.toString();
-    }
+    const url = this.buildUrl(path, params);
 
     const response = await fetch(url, {
       method: "GET",
@@ -67,5 +63,94 @@ export class RequestExecutor {
         TRelationships
       >
     >;
+  }
+
+  async getNext<
+    TAttributes = Record<string, unknown>,
+    TRelationships = Record<
+      string,
+      DrupalJsonApiRelationship
+    >
+  >(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    > | null
+  > {
+    return this.getPage(
+      response.links?.next
+    );
+  }
+
+  async getPrevious<
+    TAttributes = Record<string, unknown>,
+    TRelationships = Record<
+      string,
+      DrupalJsonApiRelationship
+    >
+  >(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    > | null
+  > {
+    return this.getPage(
+      response.links?.prev
+    );
+  }
+
+  private async getPage<
+    TAttributes = Record<string, unknown>,
+    TRelationships = Record<
+      string,
+      DrupalJsonApiRelationship
+    >
+  >(
+    link?: DrupalJsonApiLink | string | null
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships
+    > | null
+  > {
+    if (!link) {
+      return null;
+    }
+
+    const href =
+      typeof link === "string"
+        ? link
+        : link.href;
+
+    return this.get<
+      TAttributes,
+      TRelationships
+    >(href);
+  }
+
+  private buildUrl(
+    path: string,
+    params?: URLSearchParams
+  ): URL {
+    const url = new URL(
+      path,
+      `${this.baseUrl}/`
+    );
+
+    if (params) {
+      url.search = params.toString();
+    }
+
+    return url;
   }
 }

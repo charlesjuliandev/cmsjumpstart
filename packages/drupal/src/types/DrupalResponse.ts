@@ -27,7 +27,10 @@ export interface DrupalJsonApiRelationship {
 
 export interface DrupalJsonApiResource<
   TAttributes = Record<string, unknown>,
-  TRelationships = Record<string, DrupalJsonApiRelationship>
+  TRelationships = Record<
+    string,
+    DrupalJsonApiRelationship
+  >
 > {
   type: string;
   id: string;
@@ -39,7 +42,10 @@ export interface DrupalJsonApiResource<
 
 export interface DrupalResponse<
   TAttributes = Record<string, unknown>,
-  TRelationships = Record<string, DrupalJsonApiRelationship>
+  TRelationships = Record<
+    string,
+    DrupalJsonApiRelationship
+  >
 > {
   jsonapi: {
     version: string;

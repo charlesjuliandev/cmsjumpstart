@@ -1,6 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
-import { RequestExecutor } from "./RequestExecutor";
-import { BasicAuth } from "../auth/BasicAuth";
+import {
+  describe,
+  expect,
+  it,
+  vi
+} from "vitest";
+
+import {
+  RequestExecutor
+} from "./RequestExecutor";
+
+import {
+  BasicAuth
+} from "../auth/BasicAuth";
+
 import type {
   DrupalJsonApiRelationship
 } from "../types/DrupalResponse";
@@ -24,13 +36,15 @@ describe("RequestExecutor", () => {
       })
     );
 
-    const executor = new RequestExecutor({
-      baseUrl: "https://example.com"
-    });
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
 
-    const result = await executor.get(
-      "/jsonapi/node/page"
-    );
+    const result =
+      await executor.get(
+        "/jsonapi/node/page"
+      );
 
     expect(fetch).toHaveBeenCalledWith(
       new URL(
@@ -39,12 +53,58 @@ describe("RequestExecutor", () => {
       {
         method: "GET",
         headers: {
-          Accept: "application/vnd.api+json"
+          Accept:
+            "application/vnd.api+json"
         }
       }
     );
 
     expect(result).toEqual(response);
+
+    vi.unstubAllGlobals();
+  });
+
+  it("executes a GET request with query parameters", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: []
+        })
+      })
+    );
+
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    const params =
+      new URLSearchParams();
+
+    params.set(
+      "page[limit]",
+      "10"
+    );
+
+    await executor.get(
+      "/jsonapi/node/page",
+      params
+    );
+
+    expect(fetch).toHaveBeenCalledWith(
+      new URL(
+        "https://example.com/jsonapi/node/page?page%5Blimit%5D=10"
+      ),
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "application/vnd.api+json"
+        }
+      }
+    );
 
     vi.unstubAllGlobals();
   });
@@ -58,12 +118,15 @@ describe("RequestExecutor", () => {
       })
     );
 
-    const executor = new RequestExecutor({
-      baseUrl: "https://example.com"
-    });
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
 
     await expect(
-      executor.get("/jsonapi/node/page")
+      executor.get(
+        "/jsonapi/node/page"
+      )
     ).rejects.toThrow(
       "Request failed with status 404"
     );
@@ -72,28 +135,33 @@ describe("RequestExecutor", () => {
   });
 
   it("adds basic authentication headers", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({})
-    });
+    global.fetch =
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({})
+      });
 
-    const executor = new RequestExecutor({
-      baseUrl: "https://example.com",
-      auth: new BasicAuth(
-        "username",
-        "password"
-      )
-    });
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com",
+        auth: new BasicAuth(
+          "username",
+          "password"
+        )
+      });
 
-    await executor.get("/jsonapi/node/page");
+    await executor.get(
+      "/jsonapi/node/page"
+    );
 
     expect(fetch).toHaveBeenCalledWith(
       expect.any(URL),
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization:
-            "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-        })
+        headers:
+          expect.objectContaining({
+            Authorization:
+              "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+          })
       })
     );
   });
@@ -126,9 +194,10 @@ describe("RequestExecutor", () => {
       })
     );
 
-    const executor = new RequestExecutor({
-      baseUrl: "https://example.com"
-    });
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
 
     const response =
       await executor.get<{
@@ -136,8 +205,11 @@ describe("RequestExecutor", () => {
       }>("/jsonapi/node/page");
 
     expect(
-      response.data[0].attributes.title
+      response.data[0]
+        .attributes.title
     ).toBe("Test Page");
+
+    vi.unstubAllGlobals();
   });
 
   it("returns typed Drupal relationships", async () => {
@@ -177,9 +249,10 @@ describe("RequestExecutor", () => {
       })
     );
 
-    const executor = new RequestExecutor({
-      baseUrl: "https://example.com"
-    });
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
 
     const response =
       await executor.get<
@@ -187,12 +260,14 @@ describe("RequestExecutor", () => {
           title: string;
         },
         {
-          field_image: DrupalJsonApiRelationship;
+          field_image:
+            DrupalJsonApiRelationship;
         }
       >("/jsonapi/node/page");
 
     expect(
-      response.data[0].relationships
+      response.data[0]
+        .relationships
         ?.field_image.data
     ).toEqual({
       type: "media--image",
@@ -200,5 +275,215 @@ describe("RequestExecutor", () => {
     });
 
     vi.unstubAllGlobals();
+  });
+
+  it("follows a Drupal next-page link", async () => {
+    const nextResponse = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: [
+        {
+          type: "node--page",
+          id: "456",
+          attributes: {
+            title: "Next Page"
+          }
+        }
+      ]
+    };
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          jsonapi: {
+            version: "1.0"
+          },
+
+          data: [
+            {
+              type: "node--page",
+              id: "123"
+            }
+          ],
+
+          links: {
+            next: {
+              href:
+                "https://example.com/jsonapi/node/page?page[offset]=10"
+            }
+          }
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue(
+          nextResponse
+        )
+      });
+
+    vi.stubGlobal(
+      "fetch",
+      fetchMock
+    );
+
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    const firstResponse =
+      await executor.get(
+        "/jsonapi/node/page"
+      );
+
+    const secondResponse =
+      await executor.getNext(
+        firstResponse
+      );
+
+    expect(secondResponse)
+      .toEqual(nextResponse);
+
+    expect(fetchMock)
+      .toHaveBeenLastCalledWith(
+        new URL(
+          "https://example.com/jsonapi/node/page?page[offset]=10"
+        ),
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/vnd.api+json"
+          }
+        }
+      );
+
+    vi.unstubAllGlobals();
+  });
+
+  it("follows a Drupal previous-page link", async () => {
+    const previousResponse = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: [
+        {
+          type: "node--page",
+          id: "123",
+          attributes: {
+            title: "Previous Page"
+          }
+        }
+      ]
+    };
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(
+          previousResponse
+        )
+      });
+
+    vi.stubGlobal(
+      "fetch",
+      fetchMock
+    );
+
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: [],
+
+      links: {
+        prev: {
+          href:
+            "https://example.com/jsonapi/node/page?page[offset]=0"
+        }
+      }
+    };
+
+    const result =
+      await executor.getPrevious(
+        response
+      );
+
+    expect(result)
+      .toEqual(previousResponse);
+
+    expect(fetchMock)
+      .toHaveBeenCalledWith(
+        new URL(
+          "https://example.com/jsonapi/node/page?page[offset]=0"
+        ),
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/vnd.api+json"
+          }
+        }
+      );
+
+    vi.unstubAllGlobals();
+  });
+
+  it("returns null when there is no next page", async () => {
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: []
+    };
+
+    const result =
+      await executor.getNext(
+        response
+      );
+
+    expect(result)
+      .toBeNull();
+  });
+
+  it("returns null when there is no previous page", async () => {
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    const response = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: []
+    };
+
+    const result =
+      await executor.getPrevious(
+        response
+      );
+
+    expect(result)
+      .toBeNull();
   });
 });
