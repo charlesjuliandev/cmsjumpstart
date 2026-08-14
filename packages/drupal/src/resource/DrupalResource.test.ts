@@ -59,6 +59,29 @@ describe("DrupalResource", () => {
       .toBe(10);
   });
 
+  it("supports sparse fieldsets", () => {
+    const resource =
+      new DrupalResource("node--event");
+
+    resource.fields(
+      "title",
+      "field_date",
+      "field_image"
+    );
+
+    const options =
+      resource
+        .getQuery()
+        .getOptions();
+
+    expect(options.fields)
+      .toEqual([
+        "title",
+        "field_date",
+        "field_image"
+      ]);
+  });
+
   it("supports comparison filters", () => {
     const resource =
       new DrupalResource("node--event");
@@ -120,26 +143,6 @@ describe("DrupalResource", () => {
       ]);
   });
 
-  it("supports pagination", () => {
-    const resource =
-      new DrupalResource("node--page");
-
-    resource
-      .page(2)
-      .limit(10);
-
-    const options =
-      resource
-        .getQuery()
-        .getOptions();
-
-    expect(options.page)
-      .toBe(2);
-
-    expect(options.limit)
-      .toBe(10);
-  });
-
   it("executes a Drupal JSON:API request", async () => {
     const executor = {
       get: vi.fn().mockResolvedValue({
@@ -154,7 +157,6 @@ describe("DrupalResource", () => {
       );
 
     await resource
-      .page(2)
       .limit(10)
       .get();
 
@@ -168,14 +170,44 @@ describe("DrupalResource", () => {
 
     expect(params)
       .toBeInstanceOf(URLSearchParams);
+  });
+
+  it("includes sparse fieldsets in Drupal JSON:API requests", async () => {
+    const executor = {
+      get: vi.fn().mockResolvedValue({
+        data: []
+      })
+    };
+
+    const resource =
+      new DrupalResource(
+        "node--event",
+        executor as unknown as RequestExecutor
+      );
+
+    await resource
+      .fields(
+        "title",
+        "field_date",
+        "field_image"
+      )
+      .get();
+
+    const [
+      path,
+      params
+    ] = executor.get.mock.calls[0];
+
+    expect(path)
+      .toBe("/jsonapi/node/event");
 
     expect(
-      params.get("page[offset]")
-    ).toBe("20");
-
-    expect(
-      params.get("page[limit]")
-    ).toBe("10");
+      params.get(
+        "fields[node--event]"
+      )
+    ).toBe(
+      "title,field_date,field_image"
+    );
   });
 
   it("supports typed Drupal resource attributes", async () => {

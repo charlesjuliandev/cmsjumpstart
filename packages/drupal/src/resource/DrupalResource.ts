@@ -43,6 +43,13 @@ export class DrupalResource<
     return this;
   }
 
+  fields(...fields: string[]) {
+    this.query =
+      this.query.fields(...fields);
+
+    return this;
+  }
+
   filter(
     field: string,
     value: string | number | boolean

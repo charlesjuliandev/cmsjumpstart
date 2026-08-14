@@ -26,7 +26,7 @@ describe("Drupal JSON:API integration", () => {
       !apiKey
     ) {
       throw new Error(
-        "Missing DRUPAL_URL, HTHAUTH_U, HTHAUTH_P, CONSUMERUUID, or UP_API_KEY environment variables."
+        "Missing DRUPAL_URL, HTAUTH_U, HTAUTH_P, CONSUMERUUID, or UP_API_KEY environment variables."
       );
     }
 
@@ -61,23 +61,6 @@ describe("Drupal JSON:API integration", () => {
 
       const todayIso =
         today.toISOString();
-
-      const query =
-        DrupalQueryBuilder
-          .create("node--event")
-          .filter(
-            "field_date.value",
-            ">=",
-            todayIso
-          )
-          .sort(
-            "field_date.value"
-          )
-          .limit(5);
-
-      const params =
-        DrupalQuerySerializer
-          .serialize(query);
 
       const response =
         await client
