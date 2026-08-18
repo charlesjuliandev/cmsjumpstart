@@ -1,8 +1,11 @@
 import type {
   DrupalJsonApiRelationship,
-  DrupalJsonApiResource,
   DrupalResponse
 } from "../types/DrupalResponse";
+
+import type {
+  RequestExecutor
+} from "../executor/RequestExecutor";
 
 import {
   DrupalResourceItem
@@ -30,7 +33,8 @@ export class DrupalResourceResponse<
       TAttributes,
       TRelationships,
       TIncludedAttributes
-    >
+    >,
+    private readonly executor?: RequestExecutor
   ) {}
 
   get jsonapi() {
@@ -96,6 +100,90 @@ export class DrupalResourceResponse<
           resource,
           this.response.included
         )
+    );
+  }
+
+  /**
+   * Fetches the next page of results.
+   *
+   * Returns null when the current response does not
+   * contain a next-page link.
+   *
+   * Pagination preserves all response generics.
+   */
+  async next(): Promise<
+    DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  > {
+    if (!this.executor) {
+      throw new Error(
+        "DrupalResourceResponse requires a RequestExecutor to paginate."
+      );
+    }
+
+    const response =
+      await this.executor.getNext<
+        TAttributes,
+        TRelationships,
+        TIncludedAttributes
+      >(this.response);
+
+    if (!response) {
+      return null;
+    }
+
+    return new DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(
+      response,
+      this.executor
+    );
+  }
+
+  /**
+   * Fetches the previous page of results.
+   *
+   * Returns null when the current response does not
+   * contain a previous-page link.
+   *
+   * Pagination preserves all response generics.
+   */
+  async previous(): Promise<
+    DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  > {
+    if (!this.executor) {
+      throw new Error(
+        "DrupalResourceResponse requires a RequestExecutor to paginate."
+      );
+    }
+
+    const response =
+      await this.executor.getPrevious<
+        TAttributes,
+        TRelationships,
+        TIncludedAttributes
+      >(this.response);
+
+    if (!response) {
+      return null;
+    }
+
+    return new DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(
+      response,
+      this.executor
     );
   }
 

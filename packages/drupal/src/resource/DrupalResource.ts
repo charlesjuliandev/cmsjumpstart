@@ -156,25 +156,67 @@ export class DrupalResource<
         params
       );
 
-    return new DrupalResourceResponse(
-      response
+    return new DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(
+      response,
+      this.executor
     );
   }
+
+  /**
+   * Low-level pagination helper.
+   *
+   * Accepts either a raw DrupalResponse or a
+   * DrupalResourceResponse.
+   *
+   * Prefer response.next() for the convenient
+   * response-oriented API.
+   */
+  async next(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
+
+  async next(
+    response: DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
 
   async next(
     response:
-      | DrupalResourceResponse<
-          TAttributes,
-          TRelationships,
-          TIncludedAttributes
-        >
       | DrupalResponse<
           TAttributes,
           TRelationships,
           TIncludedAttributes
         >
+      | DrupalResourceResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes
+        >
   ): Promise<
-    DrupalResourceResponse<
+    DrupalResponse<
       TAttributes,
       TRelationships,
       TIncludedAttributes
@@ -191,36 +233,64 @@ export class DrupalResource<
         ? response.toJSON()
         : response;
 
-    const nextResponse =
-      await this.executor.getNext<
-        TAttributes,
-        TRelationships,
-        TIncludedAttributes
-      >(rawResponse);
-
-    if (!nextResponse) {
-      return null;
-    }
-
-    return new DrupalResourceResponse(
-      nextResponse
-    );
+    return this.executor.getNext<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(rawResponse);
   }
+
+  /**
+   * Low-level pagination helper.
+   *
+   * Accepts either a raw DrupalResponse or a
+   * DrupalResourceResponse.
+   *
+   * Prefer response.previous() for the convenient
+   * response-oriented API.
+   */
+  async previous(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
+
+  async previous(
+    response: DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
 
   async previous(
     response:
-      | DrupalResourceResponse<
-          TAttributes,
-          TRelationships,
-          TIncludedAttributes
-        >
       | DrupalResponse<
           TAttributes,
           TRelationships,
           TIncludedAttributes
         >
+      | DrupalResourceResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes
+        >
   ): Promise<
-    DrupalResourceResponse<
+    DrupalResponse<
       TAttributes,
       TRelationships,
       TIncludedAttributes
@@ -237,20 +307,11 @@ export class DrupalResource<
         ? response.toJSON()
         : response;
 
-    const previousResponse =
-      await this.executor.getPrevious<
-        TAttributes,
-        TRelationships,
-        TIncludedAttributes
-      >(rawResponse);
-
-    if (!previousResponse) {
-      return null;
-    }
-
-    return new DrupalResourceResponse(
-      previousResponse
-    );
+    return this.executor.getPrevious<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(rawResponse);
   }
 
   /**
@@ -435,7 +496,7 @@ export class DrupalResource<
 
   /**
    * Resolves a typed to-many relationship by name
-   * from the first resource in the response.
+   * from the first resource.
    */
   includedResources<
     TRelationship extends keyof TRelationships

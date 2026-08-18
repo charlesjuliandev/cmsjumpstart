@@ -1,12 +1,17 @@
 import {
   describe,
   expect,
-  it
+  it,
+  vi
 } from "vitest";
 
 import {
   DrupalResourceResponse
 } from "./DrupalResourceResponse";
+
+import {
+  RequestExecutor
+} from "../executor/RequestExecutor";
 
 import type {
   DrupalJsonApiRelationship,
@@ -22,8 +27,8 @@ describe(
     };
 
     type EventRelationships = {
-      field_image: DrupalJsonApiRelationship;
-      field_tags: DrupalJsonApiRelationship;
+      field_image?: DrupalJsonApiRelationship;
+      field_tags?: DrupalJsonApiRelationship;
     };
 
     type IncludedAttributes = {
@@ -571,6 +576,368 @@ describe(
         expect(
           resourceResponse.length
         ).toBe(0);
+      }
+    );
+
+    it(
+      "loads the next page through the request executor",
+      async () => {
+        const nextResponse:
+          DrupalResponse<
+            EventAttributes,
+            EventRelationships,
+            IncludedAttributes
+          > = {
+          jsonapi: {
+            version: "1.0"
+          },
+
+          data: [
+            {
+              type: "node--event",
+              id: "event-3",
+
+              attributes: {
+                title: "Third Event",
+                status: true
+              }
+            }
+          ]
+        };
+
+        const executor = {
+          getNext: vi
+            .fn()
+            .mockResolvedValue(
+              nextResponse
+            )
+        } as unknown as RequestExecutor;
+
+        const resourceResponse =
+          new DrupalResourceResponse(
+            response,
+            executor
+          );
+
+        const next =
+          await resourceResponse.next();
+
+        expect(
+          executor.getNext
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          executor.getNext
+        ).toHaveBeenCalledWith(
+          response
+        );
+
+        expect(next)
+          .toBeInstanceOf(
+            DrupalResourceResponse
+          );
+
+        expect(next?.length)
+          .toBe(1);
+
+        expect(
+          next?.getOne()
+            ?.attributes.title
+        ).toBe("Third Event");
+      }
+    );
+
+    it(
+      "loads the previous page through the request executor",
+      async () => {
+        const previousResponse:
+          DrupalResponse<
+            EventAttributes,
+            EventRelationships,
+            IncludedAttributes
+          > = {
+          jsonapi: {
+            version: "1.0"
+          },
+
+          data: [
+            {
+              type: "node--event",
+              id: "event-0",
+
+              attributes: {
+                title: "Previous Event",
+                status: false
+              }
+            }
+          ]
+        };
+
+        const executor = {
+          getPrevious: vi
+            .fn()
+            .mockResolvedValue(
+              previousResponse
+            )
+        } as unknown as RequestExecutor;
+
+        const resourceResponse =
+          new DrupalResourceResponse(
+            response,
+            executor
+          );
+
+        const previous =
+          await resourceResponse.previous();
+
+        expect(
+          executor.getPrevious
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          executor.getPrevious
+        ).toHaveBeenCalledWith(
+          response
+        );
+
+        expect(previous)
+          .toBeInstanceOf(
+            DrupalResourceResponse
+          );
+
+        expect(previous?.length)
+          .toBe(1);
+
+        expect(
+          previous?.getOne()
+            ?.attributes.title
+        ).toBe(
+          "Previous Event"
+        );
+      }
+    );
+
+    it(
+      "returns null when there is no next page",
+      async () => {
+        const executor = {
+          getNext: vi
+            .fn()
+            .mockResolvedValue(null)
+        } as unknown as RequestExecutor;
+
+        const resourceResponse =
+          new DrupalResourceResponse(
+            response,
+            executor
+          );
+
+        const next =
+          await resourceResponse.next();
+
+        expect(
+          executor.getNext
+        ).toHaveBeenCalledWith(
+          response
+        );
+
+        expect(next)
+          .toBeNull();
+      }
+    );
+
+    it(
+      "returns null when there is no previous page",
+      async () => {
+        const executor = {
+          getPrevious: vi
+            .fn()
+            .mockResolvedValue(null)
+        } as unknown as RequestExecutor;
+
+        const resourceResponse =
+          new DrupalResourceResponse(
+            response,
+            executor
+          );
+
+        const previous =
+          await resourceResponse.previous();
+
+        expect(
+          executor.getPrevious
+        ).toHaveBeenCalledWith(
+          response
+        );
+
+        expect(previous)
+          .toBeNull();
+      }
+    );
+
+    it(
+      "preserves typed included resources through next-page pagination",
+      async () => {
+        const nextResponse:
+          DrupalResponse<
+            EventAttributes,
+            EventRelationships,
+            IncludedAttributes
+          > = {
+          jsonapi: {
+            version: "1.0"
+          },
+
+          data: [
+            {
+              type: "node--event",
+              id: "event-3",
+
+              attributes: {
+                title: "Third Event",
+                status: true
+              },
+
+              relationships: {
+                field_image: {
+                  data: {
+                    type: "media--image",
+                    id: "image-3"
+                  }
+                }
+              }
+            }
+          ],
+
+          included: [
+            {
+              type: "media--image",
+              id: "image-3",
+
+              attributes: {
+                name: "Third Event Image"
+              }
+            }
+          ]
+        };
+
+        const executor = {
+          getNext: vi
+            .fn()
+            .mockResolvedValue(
+              nextResponse
+            )
+        } as unknown as RequestExecutor;
+
+        const resourceResponse =
+          new DrupalResourceResponse<
+            EventAttributes,
+            EventRelationships,
+            IncludedAttributes
+          >(
+            response,
+            executor
+          );
+
+        const next =
+          await resourceResponse.next();
+
+        const event =
+          next?.getOne();
+
+        const image =
+          event?.includedResource(
+            "field_image"
+          );
+
+        expect(
+          image?.attributes.name
+        ).toBe(
+          "Third Event Image"
+        );
+      }
+    );
+
+    it(
+      "preserves typed included resources through previous-page pagination",
+      async () => {
+        const previousResponse:
+          DrupalResponse<
+            EventAttributes,
+            EventRelationships,
+            IncludedAttributes
+          > = {
+          jsonapi: {
+            version: "1.0"
+          },
+
+          data: [
+            {
+              type: "node--event",
+              id: "event-0",
+
+              attributes: {
+                title: "Previous Event",
+                status: false
+              },
+
+              relationships: {
+                field_image: {
+                  data: {
+                    type: "media--image",
+                    id: "image-0"
+                  }
+                }
+              }
+            }
+          ],
+
+          included: [
+            {
+              type: "media--image",
+              id: "image-0",
+
+              attributes: {
+                name: "Previous Event Image"
+              }
+            }
+          ]
+        };
+
+        const executor = {
+          getPrevious: vi
+            .fn()
+            .mockResolvedValue(
+              previousResponse
+            )
+        } as unknown as RequestExecutor;
+
+        const resourceResponse =
+          new DrupalResourceResponse<
+            EventAttributes,
+            EventRelationships,
+            IncludedAttributes
+          >(
+            response,
+            executor
+          );
+
+        const previous =
+          await resourceResponse.previous();
+
+        const event =
+          previous?.getOne();
+
+        const image =
+          event?.includedResource(
+            "field_image"
+          );
+
+        expect(
+          image?.attributes.name
+        ).toBe(
+          "Previous Event Image"
+        );
       }
     );
   }

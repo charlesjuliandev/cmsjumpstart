@@ -18,10 +18,6 @@ import type {
   DrupalResponse
 } from "../types/DrupalResponse";
 
-import {
-  DrupalResourceResponse
-} from "../response/DrupalResourceResponse";
-
 describe("DrupalResource", () => {
   it("creates a resource query", () => {
     const resource =
@@ -165,15 +161,9 @@ describe("DrupalResource", () => {
         executor as unknown as RequestExecutor
       );
 
-    const response =
-      await resource
-        .limit(10)
-        .get();
-
-    expect(response)
-      .toBeInstanceOf(
-        DrupalResourceResponse
-      );
+    await resource
+      .limit(10)
+      .get();
 
     const [
       path,
@@ -231,12 +221,10 @@ describe("DrupalResource", () => {
         jsonapi: {
           version: "1.0"
         },
-
         data: [
           {
             type: "node--page",
             id: "123",
-
             attributes: {
               title: "Test Page",
               status: true
@@ -259,202 +247,12 @@ describe("DrupalResource", () => {
       await resource.get();
 
     expect(
-      response.data[0]
-        .attributes.title
+      response.data[0].attributes.title
     ).toBe("Test Page");
 
     expect(
-      response.data[0]
-        .attributes.status
+      response.data[0].attributes.status
     ).toBe(true);
-  });
-
-  it("returns a typed DrupalResourceResponse", async () => {
-    type PageAttributes = {
-      title: string;
-      status: boolean;
-    };
-
-    const executor = {
-      get: vi.fn().mockResolvedValue({
-        jsonapi: {
-          version: "1.0"
-        },
-
-        data: [
-          {
-            type: "node--page",
-            id: "123",
-
-            attributes: {
-              title: "Test Page",
-              status: true
-            }
-          }
-        ]
-      })
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource<
-        PageAttributes
-      >(
-        "node--page",
-        executor
-      );
-
-    const response =
-      await resource.get();
-
-    expect(response.length)
-      .toBe(1);
-
-    const item =
-      response.getOne();
-
-    expect(item)
-      .not.toBeNull();
-
-    expect(item?.id)
-      .toBe("123");
-
-    expect(item?.type)
-      .toBe("node--page");
-
-    expect(item?.attributes.title)
-      .toBe("Test Page");
-
-    expect(item?.attributes.status)
-      .toBe(true);
-  });
-
-  it("supports getAll for typed resource items", async () => {
-    type PageAttributes = {
-      title: string;
-    };
-
-    const executor = {
-      get: vi.fn().mockResolvedValue({
-        jsonapi: {
-          version: "1.0"
-        },
-
-        data: [
-          {
-            type: "node--page",
-            id: "123",
-
-            attributes: {
-              title: "Page One"
-            }
-          },
-          {
-            type: "node--page",
-            id: "456",
-
-            attributes: {
-              title: "Page Two"
-            }
-          }
-        ]
-      })
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource<
-        PageAttributes
-      >(
-        "node--page",
-        executor
-      );
-
-    const response =
-      await resource.get();
-
-    const items =
-      response.getAll();
-
-    expect(items)
-      .toHaveLength(2);
-
-    expect(items[0].id)
-      .toBe("123");
-
-    expect(items[0].attributes.title)
-      .toBe("Page One");
-
-    expect(items[1].id)
-      .toBe("456");
-
-    expect(items[1].attributes.title)
-      .toBe("Page Two");
-  });
-
-  it("returns null when getOne is outside the response range", async () => {
-    const executor = {
-      get: vi.fn().mockResolvedValue({
-        jsonapi: {
-          version: "1.0"
-        },
-
-        data: []
-      })
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource(
-        "node--page",
-        executor
-      );
-
-    const response =
-      await resource.get();
-
-    expect(
-      response.getOne()
-    ).toBeNull();
-
-    expect(
-      response.getOne(10)
-    ).toBeNull();
-  });
-
-  it("preserves the raw response through toJSON", async () => {
-    const rawResponse = {
-      jsonapi: {
-        version: "1.0"
-      },
-
-      data: [
-        {
-          type: "node--page",
-          id: "123",
-
-          attributes: {
-            title: "Test Page"
-          }
-        }
-      ]
-    };
-
-    const executor = {
-      get: vi.fn().mockResolvedValue(
-        rawResponse
-      )
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource(
-        "node--page",
-        executor
-      );
-
-    const response =
-      await resource.get();
-
-    expect(
-      response.toJSON()
-    ).toBe(rawResponse);
   });
 
   it("resolves a typed included resource", () => {
@@ -954,6 +752,7 @@ describe("DrupalResource", () => {
             }
           }
         },
+
         {
           type: "node--event",
           id: "event-2",
@@ -982,6 +781,7 @@ describe("DrupalResource", () => {
             name: "Image One"
           }
         },
+
         {
           type: "media--image",
           id: "image-2",
@@ -1057,7 +857,204 @@ describe("DrupalResource", () => {
     ).toBeNull();
   });
 
+  it("preserves typed included resources through pagination", async () => {
+    type EventAttributes = {
+      title: string;
+    };
+
+    type EventRelationships = {
+      field_image: DrupalJsonApiRelationship;
+    };
+
+    type MediaAttributes = {
+      name: string;
+    };
+
+    const executor = {
+      get: vi.fn(),
+
+      getNext: vi.fn().mockResolvedValue({
+        jsonapi: {
+          version: "1.0"
+        },
+
+        data: [],
+
+        included: [
+          {
+            type: "media--image",
+            id: "image-456",
+
+            attributes: {
+              name: "Next Page Image"
+            }
+          }
+        ]
+      })
+    } as unknown as RequestExecutor;
+
+    const resource =
+      new DrupalResource<
+        EventAttributes,
+        EventRelationships,
+        MediaAttributes
+      >(
+        "node--event",
+        executor
+      );
+
+    const response =
+      {} as DrupalResponse<
+        EventAttributes,
+        EventRelationships,
+        MediaAttributes
+      >;
+
+    const nextResponse =
+      await resource.next(response);
+
+    expect(
+      executor.getNext
+    ).toHaveBeenCalledWith(response);
+
+    expect(
+      nextResponse?.included?.[0]
+        .attributes.name
+    ).toBe("Next Page Image");
+  });
+
   it("supports pagination with a DrupalResourceResponse", async () => {
+    type EventAttributes = {
+      title: string;
+    };
+
+    type EventRelationships = {
+      field_image: DrupalJsonApiRelationship;
+    };
+
+    type MediaAttributes = {
+      name: string;
+    };
+
+    const firstResponse: DrupalResponse<
+      EventAttributes,
+      EventRelationships,
+      MediaAttributes
+    > = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: [
+        {
+          type: "node--event",
+          id: "event-1",
+
+          attributes: {
+            title: "First Page Event"
+          },
+
+          relationships: {
+            field_image: {
+              data: {
+                type: "media--image",
+                id: "image-1"
+              }
+            }
+          }
+        }
+      ],
+
+      links: {
+        next: {
+          href:
+            "https://example.com/jsonapi/node/event?page[offset]=1"
+        }
+      }
+    };
+
+    const secondResponse: DrupalResponse<
+      EventAttributes,
+      EventRelationships,
+      MediaAttributes
+    > = {
+      jsonapi: {
+        version: "1.0"
+      },
+
+      data: [
+        {
+          type: "node--event",
+          id: "event-2",
+
+          attributes: {
+            title: "Second Page Event"
+          }
+        }
+      ],
+
+      included: [
+        {
+          type: "media--image",
+          id: "image-2",
+
+          attributes: {
+            name: "Second Page Image"
+          }
+        }
+      ]
+    };
+
+    const executor = {
+      get: vi.fn()
+        .mockResolvedValue(
+          firstResponse
+        ),
+
+      getNext: vi.fn()
+        .mockResolvedValue(
+          secondResponse
+        )
+    } as unknown as RequestExecutor;
+
+    const resource =
+      new DrupalResource<
+        EventAttributes,
+        EventRelationships,
+        MediaAttributes
+      >(
+        "node--event",
+        executor
+      );
+
+    const response =
+      await resource.get();
+
+    const nextResponse =
+      await response.next();
+
+    expect(
+      executor.getNext
+    ).toHaveBeenCalledWith(
+      firstResponse
+    );
+
+    expect(nextResponse)
+      .not
+      .toBeNull();
+
+    expect(
+      nextResponse?.data[0]
+        .attributes.title
+    ).toBe("Second Page Event");
+
+    expect(
+      nextResponse?.included?.[0]
+        .attributes.name
+    ).toBe("Second Page Image");
+  });
+
+  it("supports previous pagination with a DrupalResourceResponse", async () => {
     type EventAttributes = {
       title: string;
     };
@@ -1085,24 +1082,17 @@ describe("DrupalResource", () => {
           id: "event-123",
 
           attributes: {
-            title: "First Page Event"
+            title: "Current Page Event"
           }
         }
-      ],
-
-      links: {
-        next: {
-          href: "https://example.com/jsonapi/node/event?page[offset]=1"
-        }
-      }
+      ]
     };
 
-    const secondResponse:
-      DrupalResponse<
-        EventAttributes,
-        EventRelationships,
-        MediaAttributes
-      > = {
+    const previousResponse: DrupalResponse<
+      EventAttributes,
+      EventRelationships,
+      MediaAttributes
+    > = {
       jsonapi: {
         version: "1.0"
       },
@@ -1110,32 +1100,24 @@ describe("DrupalResource", () => {
       data: [
         {
           type: "node--event",
-          id: "event-456",
+          id: "event-100",
 
           attributes: {
-            title: "Second Page Event"
-          }
-        }
-      ],
-
-      included: [
-        {
-          type: "media--image",
-          id: "image-456",
-
-          attributes: {
-            name: "Second Page Image"
+            title: "Previous Page Event"
           }
         }
       ]
     };
 
     const executor = {
-      get: vi.fn(),
-
-      getNext: vi.fn()
+      get: vi.fn()
         .mockResolvedValue(
-          secondResponse
+          firstResponse
+        ),
+
+      getPrevious: vi.fn()
+        .mockResolvedValue(
+          previousResponse
         )
     } as unknown as RequestExecutor;
 
@@ -1150,137 +1132,10 @@ describe("DrupalResource", () => {
       );
 
     const response =
-      new DrupalResourceResponse<
-        EventAttributes,
-        EventRelationships,
-        MediaAttributes
-      >(firstResponse);
+      await resource.get();
 
-    const nextResponse =
-      await resource.next(response);
-
-    expect(
-      executor.getNext
-    ).toHaveBeenCalledWith(
-      firstResponse
-    );
-
-    expect(nextResponse)
-      .toBeInstanceOf(
-        DrupalResourceResponse
-      );
-
-    expect(
-      nextResponse?.getOne()
-        ?.attributes.title
-    ).toBe(
-      "Second Page Event"
-    );
-
-    expect(
-      nextResponse?.included?.[0]
-        .attributes.name
-    ).toBe(
-      "Second Page Image"
-    );
-  });
-
-  it("supports pagination with a raw DrupalResponse", async () => {
-    const response:
-      DrupalResponse = {
-      jsonapi: {
-        version: "1.0"
-      },
-
-      data: [
-        {
-          type: "node--event",
-          id: "event-123"
-        }
-      ]
-    };
-
-    const executor = {
-      get: vi.fn(),
-
-      getNext: vi.fn()
-        .mockResolvedValue({
-          jsonapi: {
-            version: "1.0"
-          },
-
-          data: []
-        })
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource(
-        "node--event",
-        executor
-      );
-
-    await resource.next(response);
-
-    expect(
-      executor.getNext
-    ).toHaveBeenCalledWith(
-      response
-    );
-  });
-
-  it("supports previous pagination with a DrupalResourceResponse", async () => {
-    const firstResponse:
-      DrupalResponse = {
-      jsonapi: {
-        version: "1.0"
-      },
-
-      data: [
-        {
-          type: "node--event",
-          id: "event-123"
-        }
-      ]
-    };
-
-    const previousResponse:
-      DrupalResponse = {
-      jsonapi: {
-        version: "1.0"
-      },
-
-      data: [
-        {
-          type: "node--event",
-          id: "event-456"
-        }
-      ]
-    };
-
-    const executor = {
-      get: vi.fn(),
-
-      getPrevious: vi.fn()
-        .mockResolvedValue(
-          previousResponse
-        )
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource(
-        "node--event",
-        executor
-      );
-
-    const response =
-      new DrupalResourceResponse(
-        firstResponse
-      );
-
-    const result =
-      await resource.previous(
-        response
-      );
+    const previous =
+      await response.previous();
 
     expect(
       executor.getPrevious
@@ -1288,73 +1143,15 @@ describe("DrupalResource", () => {
       firstResponse
     );
 
-    expect(result)
-      .toBeInstanceOf(
-        DrupalResourceResponse
-      );
+    expect(previous)
+      .not
+      .toBeNull();
 
     expect(
-      result?.getOne()?.id
-    ).toBe("event-456");
-  });
-
-  it("returns null when there is no next page", async () => {
-    const executor = {
-      get: vi.fn(),
-
-      getNext: vi.fn()
-        .mockResolvedValue(null)
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource(
-        "node--event",
-        executor
-      );
-
-    const response =
-      new DrupalResourceResponse({
-        jsonapi: {
-          version: "1.0"
-        },
-
-        data: []
-      });
-
-    const nextResponse =
-      await resource.next(response);
-
-    expect(nextResponse)
-      .toBeNull();
-  });
-
-  it("returns null when there is no previous page", async () => {
-    const executor = {
-      get: vi.fn(),
-
-      getPrevious: vi.fn()
-        .mockResolvedValue(null)
-    } as unknown as RequestExecutor;
-
-    const resource =
-      new DrupalResource(
-        "node--event",
-        executor
-      );
-
-    const response =
-      new DrupalResourceResponse({
-        jsonapi: {
-          version: "1.0"
-        },
-
-        data: []
-      });
-
-    const previousResponse =
-      await resource.previous(response);
-
-    expect(previousResponse)
-      .toBeNull();
+      previous?.data[0]
+        .attributes.title
+    ).toBe(
+      "Previous Page Event"
+    );
   });
 });
