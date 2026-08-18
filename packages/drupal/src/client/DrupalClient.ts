@@ -2,6 +2,7 @@ import type { DrupalClientConfig } from "../types/DrupalClientConfig";
 import { DrupalResource } from "../resource/DrupalResource";
 import { RequestExecutor } from "../executor/RequestExecutor";
 import { encodeBase64 } from "../utils/base64";
+
 import type {
   DrupalJsonApiRelationship
 } from "../types/DrupalResponse";
@@ -22,17 +23,26 @@ export class DrupalClient {
   }
 
   resource<
-    TAttributes = Record<string, unknown>,
-    TRelationships = Record<
+    TAttributes extends Record<string, unknown> =
+      Record<string, unknown>,
+    TRelationships extends Record<
       string,
       DrupalJsonApiRelationship
-    >
+    > = Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
+    TIncludedAttributes extends Record<
+      string,
+      unknown
+    > = Record<string, unknown>
   >(
     resourceType: string
   ) {
     return new DrupalResource<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     >(
       resourceType,
       this.executor

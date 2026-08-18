@@ -1,6 +1,21 @@
-import { describe, expect, it, vi } from "vitest";
-import { DrupalClient } from "./DrupalClient";
-import { RequestExecutor } from "../executor/RequestExecutor";
+import {
+  describe,
+  expect,
+  it,
+  vi
+} from "vitest";
+
+import {
+  DrupalClient
+} from "./DrupalClient";
+
+import {
+  RequestExecutor
+} from "../executor/RequestExecutor";
+
+import {
+  DrupalResourceResponse
+} from "../response/DrupalResourceResponse";
 
 describe("DrupalClient", () => {
   it("creates a Drupal resource", () => {
@@ -45,6 +60,11 @@ describe("DrupalClient", () => {
       .toHaveBeenCalledTimes(1);
 
     expect(result)
+      .toBeInstanceOf(
+        DrupalResourceResponse
+      );
+
+    expect(result.toJSON())
       .toEqual({
         data: []
       });

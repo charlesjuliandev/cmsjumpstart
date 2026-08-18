@@ -34,14 +34,16 @@ export class RequestExecutor {
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
-    >
+    >,
+    TIncludedAttributes = Record<string, unknown>
   >(
     path: string,
     params?: URLSearchParams
   ): Promise<
     DrupalResponse<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     >
   > {
     const url = this.buildUrl(path, params);
@@ -60,7 +62,8 @@ export class RequestExecutor {
     return response.json() as Promise<
       DrupalResponse<
         TAttributes,
-        TRelationships
+        TRelationships,
+        TIncludedAttributes
       >
     >;
   }
@@ -70,21 +73,26 @@ export class RequestExecutor {
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
-    >
+    >,
+    TIncludedAttributes = Record<string, unknown>
   >(
     response: DrupalResponse<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     >
   ): Promise<
     DrupalResponse<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     > | null
   > {
-    return this.getPage(
-      response.links?.next
-    );
+    return this.getPage<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(response.links?.next);
   }
 
   async getPrevious<
@@ -92,21 +100,26 @@ export class RequestExecutor {
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
-    >
+    >,
+    TIncludedAttributes = Record<string, unknown>
   >(
     response: DrupalResponse<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     >
   ): Promise<
     DrupalResponse<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     > | null
   > {
-    return this.getPage(
-      response.links?.prev
-    );
+    return this.getPage<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >(response.links?.prev);
   }
 
   private async getPage<
@@ -114,13 +127,15 @@ export class RequestExecutor {
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
-    >
+    >,
+    TIncludedAttributes = Record<string, unknown>
   >(
     link?: DrupalJsonApiLink | string | null
   ): Promise<
     DrupalResponse<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     > | null
   > {
     if (!link) {
@@ -134,7 +149,8 @@ export class RequestExecutor {
 
     return this.get<
       TAttributes,
-      TRelationships
+      TRelationships,
+      TIncludedAttributes
     >(href);
   }
 

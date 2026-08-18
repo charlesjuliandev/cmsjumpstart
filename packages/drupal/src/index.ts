@@ -6,6 +6,8 @@ export * from "./client";
 
 export * from "./resource/DrupalResource";
 
+export * from "./response";
+
 export * from "./types";
 
 export * from "./auth/AuthProvider";
