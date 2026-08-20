@@ -9,11 +9,13 @@ export interface RequestExecutorOptions {
   baseUrl: string;
   headers?: Record<string, string>;
   auth?: AuthProvider;
+  timeout?: number;
 }
 
 export class RequestExecutor {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
+  private readonly timeout: number;
 
   constructor(options: RequestExecutorOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
@@ -23,6 +25,9 @@ export class RequestExecutor {
       ...options.headers,
       ...(options.auth?.getHeaders() ?? {})
     };
+
+    this.timeout =
+      options.timeout ?? 15000;
   }
 
   getHeaders(): Record<string, string> {
@@ -46,26 +51,53 @@ export class RequestExecutor {
       TIncludedAttributes
     >
   > {
-    const url = this.buildUrl(path, params);
+    const url =
+      this.buildUrl(path, params);
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.headers
-    });
+    const controller =
+      new AbortController();
 
-    if (!response.ok) {
-      throw new Error(
-        `Request failed with status ${response.status}`
+    const timeoutId =
+      setTimeout(
+        () => controller.abort(),
+        this.timeout
       );
-    }
 
-    return response.json() as Promise<
-      DrupalResponse<
-        TAttributes,
-        TRelationships,
-        TIncludedAttributes
-      >
-    >;
+    try {
+      const response =
+        await fetch(url, {
+          method: "GET",
+          headers: this.headers,
+          signal: controller.signal
+        });
+
+      if (!response.ok) {
+        throw new Error(
+          `Request failed with status ${response.status}`
+        );
+      }
+
+      return response.json() as Promise<
+        DrupalResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes
+        >
+      >;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.name === "AbortError"
+      ) {
+        throw new Error(
+          `Request timed out after ${this.timeout}ms: ${url}`
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   async getNext<

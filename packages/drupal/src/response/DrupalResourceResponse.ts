@@ -9,7 +9,7 @@ import type {
 
 import {
   DrupalResourceItem
-} from "./DrupalResourceItem";
+} from "../resource/DrupalResourceItem";
 
 export class DrupalResourceResponse<
   TAttributes extends Record<string, unknown> = Record<

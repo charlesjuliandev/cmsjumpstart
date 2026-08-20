@@ -7,7 +7,8 @@ import {
 } from "../query/DrupalQuerySerializer";
 
 import type {
-  DrupalFilterOperator
+  DrupalFilterOperator,
+  DrupalFilterValue
 } from "../query/types";
 
 import {
@@ -25,21 +26,23 @@ import {
 } from "../response/DrupalResourceResponse";
 
 export class DrupalResource<
-  TAttributes extends Record<string, unknown> = Record<
-    string,
-    unknown
-  >,
+  TAttributes extends Record<string, unknown> =
+    Record<string, unknown>,
+
   TRelationships extends Record<
     string,
     DrupalJsonApiRelationship
-  > = Record<
-    string,
-    DrupalJsonApiRelationship
-  >,
+  > =
+    Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
+
   TIncludedAttributes extends Record<
     string,
     unknown
-  > = Record<string, unknown>
+  > =
+    Record<string, unknown>
 > {
   private query: DrupalQueryBuilder;
 
@@ -48,83 +51,136 @@ export class DrupalResource<
     private readonly executor?: RequestExecutor
   ) {
     this.query =
-      DrupalQueryBuilder.create(resourceType);
+      DrupalQueryBuilder.create(
+        resourceType
+      );
   }
 
-  include(...fields: string[]) {
+  include(
+    ...fields: string[]
+  ): this {
     this.query =
       this.query.include(...fields);
 
     return this;
   }
 
-  fields(...fields: string[]) {
+  fields(
+    ...fields: string[]
+  ): this {
     this.query =
       this.query.fields(...fields);
 
     return this;
   }
 
+  /**
+   * Equality filter.
+   *
+   * Example:
+   *
+   * .filter("status", true)
+   */
   filter(
     field: string,
-    value: string | number | boolean
+    value: DrupalFilterValue
   ): this;
 
+  /**
+   * Comparison, string, collection,
+   * or range filter.
+   *
+   * Example:
+   *
+   * .filter(
+   *   "title",
+   *   "CONTAINS",
+   *   "Drupal"
+   * )
+   */
   filter(
     field: string,
-    operator: DrupalFilterOperator,
-    value: string | number | boolean
+    operator: Exclude<
+      DrupalFilterOperator,
+      "IS NULL" | "IS NOT NULL"
+    >,
+    value: DrupalFilterValue
+  ): this;
+
+  /**
+   * NULL filter.
+   *
+   * Example:
+   *
+   * .filter(
+   *   "field_image",
+   *   "IS NULL"
+   * )
+   */
+  filter(
+    field: string,
+    operator:
+      | "IS NULL"
+      | "IS NOT NULL"
   ): this;
 
   filter(
     field: string,
     operatorOrValue:
       | DrupalFilterOperator
-      | string
-      | number
-      | boolean,
-    value?: string | number | boolean
+      | DrupalFilterValue,
+    value?: DrupalFilterValue
   ): this {
+    if (value === undefined) {
+      this.query =
+        this.query.filter(
+          field,
+          operatorOrValue as
+            | DrupalFilterOperator
+            | DrupalFilterValue
+        );
+
+      return this;
+    }
+
     this.query =
-      value === undefined
-        ? this.query.filter(
-            field,
-            operatorOrValue as
-              | string
-              | number
-              | boolean
-          )
-        : this.query.filter(
-            field,
-            operatorOrValue as DrupalFilterOperator,
-            value
-          );
+      this.query.filter(
+        field,
+        operatorOrValue as DrupalFilterOperator,
+        value
+      );
 
     return this;
   }
 
-  sort(...fields: string[]) {
+  sort(
+    ...fields: string[]
+  ): this {
     this.query =
       this.query.sort(...fields);
 
     return this;
   }
 
-  page(number: number) {
+  page(
+    number: number
+  ): this {
     this.query =
       this.query.page(number);
 
     return this;
   }
 
-  limit(number: number) {
+  limit(
+    number: number
+  ): this {
     this.query =
       this.query.limit(number);
 
     return this;
   }
 
-  getQuery() {
+  getQuery(): DrupalQueryBuilder {
     return this.query;
   }
 
@@ -317,19 +373,13 @@ export class DrupalResource<
   /**
    * Returns the raw relationship data.
    *
-   * This is the low-level relationship helper and does not
-   * resolve the relationship against included resources.
-   *
-   * Supports both:
+   * Supports:
    *
    * relationshipData(relationship)
    *
    * and:
    *
    * relationshipData(response, relationship)
-   *
-   * The one-argument form is useful when the relationship
-   * object has already been obtained from a resource.
    */
   relationshipData(
     relationship:
@@ -361,7 +411,10 @@ export class DrupalResource<
         >
       | DrupalJsonApiRelationship
       | undefined,
-    relationship?: DrupalJsonApiRelationship
+
+    relationship?:
+      | DrupalJsonApiRelationship
+      | undefined
   ):
     | DrupalJsonApiRelationship["data"]
     | null {
@@ -374,7 +427,9 @@ export class DrupalResource<
               | undefined
           )?.data;
 
-    if (relationshipData === undefined) {
+    if (
+      relationshipData === undefined
+    ) {
       return null;
     }
 
@@ -382,14 +437,8 @@ export class DrupalResource<
   }
 
   /**
-   * Resolves a single JSON:API relationship against
-   * the response's included resources.
-   *
-   * Returns null when:
-   * - the relationship is missing
-   * - the relationship contains no data
-   * - the relationship is to-many
-   * - the related resource was not included
+   * Resolves a single JSON:API relationship
+   * against the response's included resources.
    */
   getIncludedResource(
     response: DrupalResponse<
@@ -397,6 +446,7 @@ export class DrupalResource<
       TRelationships,
       TIncludedAttributes
     >,
+
     relationship:
       | DrupalJsonApiRelationship
       | undefined
@@ -405,7 +455,9 @@ export class DrupalResource<
   > | null {
     if (
       !relationship?.data ||
-      Array.isArray(relationship.data)
+      Array.isArray(
+        relationship.data
+      )
     ) {
       return null;
     }
@@ -416,21 +468,17 @@ export class DrupalResource<
     return (
       response.included?.find(
         resource =>
-          resource.type === identifier.type &&
-          resource.id === identifier.id
+          resource.type ===
+            identifier.type &&
+          resource.id ===
+            identifier.id
       ) ?? null
     );
   }
 
   /**
-   * Resolves a multi-value JSON:API relationship against
-   * the response's included resources.
-   *
-   * Returns an empty array when:
-   * - the relationship is missing
-   * - the relationship contains no data
-   * - the relationship is to-one
-   * - matching resources were not included
+   * Resolves a multi-value JSON:API
+   * relationship against included resources.
    */
   getIncludedResources(
     response: DrupalResponse<
@@ -438,6 +486,7 @@ export class DrupalResource<
       TRelationships,
       TIncludedAttributes
     >,
+
     relationship:
       | DrupalJsonApiRelationship
       | undefined
@@ -446,7 +495,9 @@ export class DrupalResource<
   >[] {
     if (
       !relationship?.data ||
-      !Array.isArray(relationship.data)
+      !Array.isArray(
+        relationship.data
+      )
     ) {
       return [];
     }
@@ -459,16 +510,18 @@ export class DrupalResource<
         resource =>
           identifiers.some(
             identifier =>
-              resource.type === identifier.type &&
-              resource.id === identifier.id
+              resource.type ===
+                identifier.type &&
+              resource.id ===
+                identifier.id
           )
       ) ?? []
     );
   }
 
   /**
-   * Resolves a typed to-one relationship by name
-   * from the first resource in the response.
+   * Resolves a typed to-one relationship
+   * by name from the first resource.
    */
   includedResource<
     TRelationship extends keyof TRelationships
@@ -478,6 +531,7 @@ export class DrupalResource<
       TRelationships,
       TIncludedAttributes
     >,
+
     relationship: TRelationship
   ): DrupalJsonApiResource<
     TIncludedAttributes
@@ -495,8 +549,8 @@ export class DrupalResource<
   }
 
   /**
-   * Resolves a typed to-many relationship by name
-   * from the first resource.
+   * Resolves a typed to-many relationship
+   * by name from the first resource.
    */
   includedResources<
     TRelationship extends keyof TRelationships
@@ -506,6 +560,7 @@ export class DrupalResource<
       TRelationships,
       TIncludedAttributes
     >,
+
     relationship: TRelationship
   ): DrupalJsonApiResource<
     TIncludedAttributes
@@ -522,7 +577,7 @@ export class DrupalResource<
     );
   }
 
-  private getEndpoint() {
+  private getEndpoint(): string {
     return this.resourceType.replace(
       "--",
       "/"

@@ -50,13 +50,15 @@ describe("RequestExecutor", () => {
       new URL(
         "https://example.com/jsonapi/node/page"
       ),
-      {
+      expect.objectContaining({
         method: "GET",
         headers: {
           Accept:
             "application/vnd.api+json"
-        }
-      }
+        },
+        signal:
+          expect.any(AbortSignal)
+      })
     );
 
     expect(result).toEqual(response);
@@ -97,13 +99,15 @@ describe("RequestExecutor", () => {
       new URL(
         "https://example.com/jsonapi/node/page?page%5Blimit%5D=10"
       ),
-      {
+      expect.objectContaining({
         method: "GET",
         headers: {
           Accept:
             "application/vnd.api+json"
-        }
-      }
+        },
+        signal:
+          expect.any(AbortSignal)
+      })
     );
 
     vi.unstubAllGlobals();
@@ -161,9 +165,13 @@ describe("RequestExecutor", () => {
           expect.objectContaining({
             Authorization:
               "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-          })
+          }),
+        signal:
+          expect.any(AbortSignal)
       })
     );
+
+    vi.unstubAllGlobals();
   });
 
   it("returns a typed Drupal response", async () => {
@@ -353,13 +361,15 @@ describe("RequestExecutor", () => {
         new URL(
           "https://example.com/jsonapi/node/page?page[offset]=10"
         ),
-        {
+        expect.objectContaining({
           method: "GET",
           headers: {
             Accept:
               "application/vnd.api+json"
-          }
-        }
+          },
+          signal:
+            expect.any(AbortSignal)
+        })
       );
 
     vi.unstubAllGlobals();
@@ -429,13 +439,15 @@ describe("RequestExecutor", () => {
         new URL(
           "https://example.com/jsonapi/node/page?page[offset]=0"
         ),
-        {
+        expect.objectContaining({
           method: "GET",
           headers: {
             Accept:
               "application/vnd.api+json"
-          }
-        }
+          },
+          signal:
+            expect.any(AbortSignal)
+        })
       );
 
     vi.unstubAllGlobals();

@@ -2,13 +2,19 @@ import type {
   DrupalQueryBuilder
 } from "./DrupalQueryBuilder";
 
+import type {
+  DrupalFilterValue
+} from "./types";
+
 export class DrupalQuerySerializer {
   static serialize(
     query: DrupalQueryBuilder
   ): URLSearchParams {
-    const params = new URLSearchParams();
+    const params =
+      new URLSearchParams();
 
-    const options = query.getOptions();
+    const options =
+      query.getOptions();
 
     if (options.includes?.length) {
       params.set(
@@ -35,7 +41,8 @@ export class DrupalQuerySerializer {
       params.set(
         "page[offset]",
         String(
-          options.page * (options.limit ?? 0)
+          options.page *
+            (options.limit ?? 0)
         )
       );
     }
@@ -49,16 +56,39 @@ export class DrupalQuerySerializer {
 
     if (options.filters?.length) {
       options.filters.forEach(
-        ({ field, operator, value }, index) => {
+        (
+          {
+            field,
+            operator,
+            value
+          },
+          index
+        ) => {
+          /*
+           * Equality filters use Drupal's
+           * shorthand syntax.
+           *
+           * filter[field]=value
+           */
           if (operator === "=") {
             params.set(
               `filter[${field}]`,
-              String(value)
+              DrupalQuerySerializer.serializeValue(
+                value
+              )
             );
 
             return;
           }
 
+          /*
+           * All non-equality operators use
+           * Drupal JSON:API condition syntax.
+           *
+           * filter[condition_0][condition][path]
+           * filter[condition_0][condition][operator]
+           * filter[condition_0][condition][value]
+           */
           const conditionPrefix =
             `filter[condition_${index}][condition]`;
 
@@ -72,14 +102,37 @@ export class DrupalQuerySerializer {
             operator
           );
 
+          /*
+           * IS NULL and IS NOT NULL intentionally
+           * have no value parameter.
+           */
+          if (
+            operator === "IS NULL" ||
+            operator === "IS NOT NULL"
+          ) {
+            return;
+          }
+
           params.set(
             `${conditionPrefix}[value]`,
-            String(value)
+            DrupalQuerySerializer.serializeValue(
+              value
+            )
           );
         }
       );
     }
 
     return params;
+  }
+
+  private static serializeValue(
+    value: DrupalFilterValue | undefined
+  ): string {
+    if (Array.isArray(value)) {
+      return value.join(",");
+    }
+
+    return String(value);
   }
 }

@@ -11,7 +11,9 @@ import {
 
 import type {
   DrupalResponse,
-  DrupalJsonApiRelationship
+  DrupalJsonApiRelationship,
+  DrupalToOneRelationship,
+  DrupalToManyRelationship
 } from "./DrupalResponse";
 
 describe("DrupalResponse", () => {
@@ -348,5 +350,203 @@ describe("DrupalResponse", () => {
 
     expect(tags)
       .toEqual([]);
+  });
+
+  it("supports typed to-one relationship definitions", () => {
+    type ImageAttributes = {
+      name: string;
+      alt: string;
+      width: number;
+      height: number;
+    };
+
+    type ImageRelationship = DrupalToOneRelationship<
+      ImageAttributes
+    >;
+
+    const imageRelationship: ImageRelationship = {
+      attributes: {
+        name: "Event Image",
+        alt: "Community event",
+        width: 1200,
+        height: 800
+      },
+
+      relationships: {},
+
+      cardinality: "one"
+    };
+
+    expect(
+      imageRelationship.attributes.name
+    ).toBe("Event Image");
+
+    expect(
+      imageRelationship.attributes.width
+    ).toBe(1200);
+
+    expect(
+      imageRelationship.cardinality
+    ).toBe("one");
+  });
+
+  it("supports typed to-many relationship definitions", () => {
+    type TagAttributes = {
+      name: string;
+    };
+
+    type TagRelationship = DrupalToManyRelationship<
+      TagAttributes
+    >;
+
+    const tagRelationship: TagRelationship = {
+      attributes: {
+        name: "Drupal"
+      },
+
+      relationships: {},
+
+      cardinality: "many"
+    };
+
+    expect(
+      tagRelationship.attributes.name
+    ).toBe("Drupal");
+
+    expect(
+      tagRelationship.cardinality
+    ).toBe("many");
+  });
+
+  it("supports nested typed relationship definitions", () => {
+    type ImageAttributes = {
+      name: string;
+      alt: string;
+    };
+
+    type MediaAttributes = {
+      name: string;
+    };
+
+    type ImageRelationships = {
+      field_media: DrupalToOneRelationship<
+        MediaAttributes
+      >;
+    };
+
+    type ImageRelationship =
+      DrupalToOneRelationship<
+        ImageAttributes,
+        ImageRelationships
+      >;
+
+    const imageRelationship: ImageRelationship = {
+      attributes: {
+        name: "Event Image",
+        alt: "Community event"
+      },
+
+      relationships: {
+        field_media: {
+          attributes: {
+            name: "Image Media"
+          },
+
+          relationships: {},
+
+          cardinality: "one"
+        }
+      },
+
+      cardinality: "one"
+    };
+
+    expect(
+      imageRelationship.attributes.alt
+    ).toBe("Community event");
+
+    expect(
+      imageRelationship
+        .relationships
+        .field_media
+        .attributes.name
+    ).toBe("Image Media");
+
+    expect(
+      imageRelationship
+        .relationships
+        .field_media
+        .cardinality
+    ).toBe("one");
+  });
+
+  it("supports combining typed to-one and to-many relationships", () => {
+    type ImageAttributes = {
+      name: string;
+      alt: string;
+    };
+
+    type TagAttributes = {
+      name: string;
+    };
+
+    type EventRelationships = {
+      field_image: DrupalToOneRelationship<
+        ImageAttributes
+      >;
+
+      field_tags: DrupalToManyRelationship<
+        TagAttributes
+      >;
+    };
+
+    const relationships: EventRelationships = {
+      field_image: {
+        attributes: {
+          name: "Event Image",
+          alt: "Community event"
+        },
+
+        relationships: {},
+
+        cardinality: "one"
+      },
+
+      field_tags: {
+        attributes: {
+          name: "Drupal"
+        },
+
+        relationships: {},
+
+        cardinality: "many"
+      }
+    };
+
+    expect(
+      relationships
+        .field_image
+        .attributes
+        .alt
+    ).toBe("Community event");
+
+    expect(
+      relationships
+        .field_image
+        .cardinality
+    ).toBe("one");
+
+    expect(
+      relationships
+        .field_tags
+        .attributes
+        .name
+    ).toBe("Drupal");
+
+    expect(
+      relationships
+        .field_tags
+        .cardinality
+    ).toBe("many");
   });
 });

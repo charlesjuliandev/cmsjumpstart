@@ -1,1 +1,7 @@
-export * from "./DrupalResource";
+export {
+  DrupalResource
+} from "./DrupalResource";
+
+export {
+  DrupalResourceItem
+} from "./DrupalResourceItem";
