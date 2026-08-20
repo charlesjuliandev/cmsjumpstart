@@ -1,13 +1,43 @@
 import type {
   DrupalJsonApiRelationship,
-  DrupalJsonApiResource
+  DrupalJsonApiResource,
+  DrupalRelationshipAttributes,
+  DrupalRelationshipDefinitions,
+  DrupalRelationshipRelationships
 } from "../types/DrupalResponse";
 
+type DrupalTypedRelationships<
+  TDefinition
+> =
+  DrupalRelationshipRelationships<
+    TDefinition
+  > extends infer TRelationships
+    ? TRelationships extends Record<
+        string,
+        DrupalJsonApiRelationship
+      >
+      ? TRelationships
+      : Record<
+          string,
+          DrupalJsonApiRelationship
+        >
+    : Record<
+        string,
+        DrupalJsonApiRelationship
+      >;
+
+type DrupalTypedAttributes<
+  TDefinition
+> = DrupalRelationshipAttributes<
+  TDefinition
+>;
+
 export class DrupalResourceItem<
-  TAttributes extends Record<string, unknown> = Record<
+  TAttributes extends Record<
     string,
     unknown
-  >,
+  > = Record<string, unknown>,
+
   TRelationships extends Record<
     string,
     DrupalJsonApiRelationship
@@ -15,16 +45,24 @@ export class DrupalResourceItem<
     string,
     DrupalJsonApiRelationship
   >,
+
   TIncludedAttributes extends Record<
     string,
     unknown
-  > = Record<string, unknown>
+  > = Record<string, unknown>,
+
+  TRelationshipDefinitions extends
+    DrupalRelationshipDefinitions = Record<
+    string,
+    never
+  >
 > {
   constructor(
-    private readonly resource: DrupalJsonApiResource<
-      TAttributes,
-      TRelationships
-    >,
+    private readonly resource:
+      DrupalJsonApiResource<
+        TAttributes,
+        TRelationships
+      >,
 
     private readonly included:
       | DrupalJsonApiResource<
@@ -58,8 +96,6 @@ export class DrupalResourceItem<
    * Returns the raw JSON:API relationships.
    *
    * Relationship data is intentionally not normalized here.
-   * Developers can inspect the complete Drupal relationship
-   * structure when they need it.
    */
   get relationships():
     | TRelationships
@@ -82,12 +118,21 @@ export class DrupalResourceItem<
   }
 
   /**
-   * Returns the raw JSON:API relationship data.
+   * Returns the raw JSON:API relationship linkage.
    *
-   * This preserves Drupal's original relationship structure,
-   * including resource identifiers, metadata, and links.
+   * This returns the resource identifier(s) from the
+   * relationship's data property without resolving them
+   * against the included collection.
+   *
+   * For a to-one relationship:
+   *
+   *   { type, id } | null
+   *
+   * For a to-many relationship:
+   *
+   *   { type, id }[]
    */
-  relationship<
+  relationshipLinkage<
     TRelationship extends keyof TRelationships
   >(
     relationship: TRelationship
@@ -97,7 +142,9 @@ export class DrupalResourceItem<
         relationship
       ]?.data;
 
-    if (relationshipData === undefined) {
+    if (
+      relationshipData === undefined
+    ) {
       return null;
     }
 
@@ -105,11 +152,38 @@ export class DrupalResourceItem<
   }
 
   /**
-   * Resolves a to-one relationship against the included
-   * resources and returns the result as a DrupalResourceItem.
+   * Resolves a to-one relationship against the
+   * included resources.
    *
-   * The complete included collection is passed to the returned
-   * item so nested relationship traversal remains possible.
+   * The relationship definition determines the
+   * attributes and relationships of the returned
+   * DrupalResourceItem.
+   */
+  includedResource<
+    TRelationship extends keyof TRelationshipDefinitions
+  >(
+    relationship: TRelationship
+  ): DrupalResourceItem<
+    DrupalTypedAttributes<
+      TRelationshipDefinitions[
+        TRelationship
+      ]
+    >,
+
+    DrupalTypedRelationships<
+      TRelationshipDefinitions[
+        TRelationship
+      ]
+    >,
+
+    TIncludedAttributes,
+
+    TRelationshipDefinitions
+  > | null;
+
+  /**
+   * Backwards-compatible overload for relationships
+   * that have not yet been given typed definitions.
    */
   includedResource<
     TRelationship extends keyof TRelationships
@@ -120,16 +194,32 @@ export class DrupalResourceItem<
     Record<
       string,
       DrupalJsonApiRelationship
-    >
-  > | null {
+    >,
+    TIncludedAttributes
+  > | null;
+
+  includedResource(
+    relationship: string
+  ):
+    | DrupalResourceItem<
+        Record<string, unknown>,
+        Record<
+          string,
+          DrupalJsonApiRelationship
+        >,
+        TIncludedAttributes
+      >
+    | null {
     const relationshipValue =
       this.resource.relationships?.[
-        relationship
+        relationship as keyof TRelationships
       ];
 
     if (
       !relationshipValue?.data ||
-      Array.isArray(relationshipValue.data)
+      Array.isArray(
+        relationshipValue.data
+      )
     ) {
       return null;
     }
@@ -140,33 +230,55 @@ export class DrupalResourceItem<
     const includedResource =
       this.included?.find(
         resource =>
-          resource.type === identifier.type &&
-          resource.id === identifier.id
+          resource.type ===
+            identifier.type &&
+          resource.id ===
+            identifier.id
       );
 
     if (!includedResource) {
       return null;
     }
 
-    return new DrupalResourceItem<
-      TIncludedAttributes,
-      Record<
-        string,
-        DrupalJsonApiRelationship
-      >,
-      TIncludedAttributes
-    >(
+    return new DrupalResourceItem(
       includedResource,
       this.included
     );
   }
 
   /**
-   * Resolves a to-many relationship against the included
-   * resources and returns the results as DrupalResourceItems.
+   * Resolves a to-many relationship against the
+   * included resources.
    *
-   * Resources that are referenced by the relationship but
-   * missing from the included collection are ignored.
+   * The relationship definition determines the
+   * attributes and relationships of each returned
+   * DrupalResourceItem.
+   */
+  includedResources<
+    TRelationship extends keyof TRelationshipDefinitions
+  >(
+    relationship: TRelationship
+  ): DrupalResourceItem<
+    DrupalTypedAttributes<
+      TRelationshipDefinitions[
+        TRelationship
+      ]
+    >,
+
+    DrupalTypedRelationships<
+      TRelationshipDefinitions[
+        TRelationship
+      ]
+    >,
+
+    TIncludedAttributes,
+
+    TRelationshipDefinitions
+  >[];
+
+  /**
+   * Backwards-compatible overload for relationships
+   * that have not yet been given typed definitions.
    */
   includedResources<
     TRelationship extends keyof TRelationships
@@ -177,11 +289,24 @@ export class DrupalResourceItem<
     Record<
       string,
       DrupalJsonApiRelationship
-    >
-  >[] {
+    >,
+    TIncludedAttributes
+  >[];
+
+  includedResources(
+    relationship: string
+  ):
+    | DrupalResourceItem<
+        Record<string, unknown>,
+        Record<
+          string,
+          DrupalJsonApiRelationship
+        >,
+        TIncludedAttributes
+      >[] {
     const relationshipValue =
       this.resource.relationships?.[
-        relationship
+        relationship as keyof TRelationships
       ];
 
     if (!relationshipValue) {
@@ -205,21 +330,16 @@ export class DrupalResourceItem<
         resource =>
           identifiers.some(
             identifier =>
-              resource.type === identifier.type &&
-              resource.id === identifier.id
+              resource.type ===
+                identifier.type &&
+              resource.id ===
+                identifier.id
           )
       ) ?? [];
 
     return resources.map(
       resource =>
-        new DrupalResourceItem<
-          TIncludedAttributes,
-          Record<
-            string,
-            DrupalJsonApiRelationship
-          >,
-          TIncludedAttributes
-        >(
+        new DrupalResourceItem(
           resource,
           this.included
         )

@@ -210,7 +210,65 @@ describe("DrupalResourceItem", () => {
     });
   });
 
-  it("returns raw relationship data", () => {
+  it("exposes the complete raw relationship object", () => {
+    type EventAttributes = {
+      title: string;
+    };
+
+    type EventRelationships = {
+      field_image: DrupalJsonApiRelationship;
+    };
+
+    const resource:
+      DrupalJsonApiResource<
+        EventAttributes,
+        EventRelationships
+      > = {
+      type: "node--event",
+      id: "event-123",
+
+      attributes: {
+        title: "Community Event"
+      },
+
+      relationships: {
+        field_image: {
+          data: {
+            type: "media--image",
+            id: "image-123"
+          },
+
+          links: {
+            related: {
+              href:
+                "https://example.com/related/image-123"
+            }
+          },
+
+          meta: {
+            custom: true
+          }
+        }
+      }
+    };
+
+    const item =
+      new DrupalResourceItem<
+        EventAttributes,
+        EventRelationships
+      >(
+        resource,
+        undefined
+      );
+
+    expect(
+      item.relationships?.field_image
+    ).toEqual(
+      resource.relationships?.field_image
+    );
+  });
+
+  it("returns raw to-one relationship linkage", () => {
     type EventAttributes = {
       title: string;
     };
@@ -251,14 +309,78 @@ describe("DrupalResourceItem", () => {
       );
 
     expect(
-      item.relationship("field_image")
+      item.relationshipLinkage(
+        "field_image"
+      )
     ).toEqual({
       type: "media--image",
       id: "image-123"
     });
   });
 
-  it("returns null for a missing relationship", () => {
+  it("returns raw to-many relationship linkage", () => {
+    type ArticleAttributes = {
+      title: string;
+    };
+
+    type ArticleRelationships = {
+      field_tags: DrupalJsonApiRelationship;
+    };
+
+    const resource:
+      DrupalJsonApiResource<
+        ArticleAttributes,
+        ArticleRelationships
+      > = {
+      type: "node--article",
+      id: "article-123",
+
+      attributes: {
+        title: "Drupal and Next.js"
+      },
+
+      relationships: {
+        field_tags: {
+          data: [
+            {
+              type: "taxonomy_term--tags",
+              id: "tag-1"
+            },
+            {
+              type: "taxonomy_term--tags",
+              id: "tag-2"
+            }
+          ]
+        }
+      }
+    };
+
+    const item =
+      new DrupalResourceItem<
+        ArticleAttributes,
+        ArticleRelationships
+      >(
+        resource,
+        undefined
+      );
+
+    expect(
+      item.relationshipLinkage(
+        "field_tags"
+      )
+    ).toEqual([
+      {
+        type: "taxonomy_term--tags",
+        id: "tag-1"
+      },
+      {
+        type: "taxonomy_term--tags",
+        id: "tag-2"
+      }
+    ]);
+  });
+
+  it("returns null for a missing relationship linkage", () => {
     type EventAttributes = {
       title: string;
     };
@@ -290,7 +412,9 @@ describe("DrupalResourceItem", () => {
       );
 
     expect(
-      item.relationship("field_image")
+      item.relationshipLinkage(
+        "field_image"
+      )
     ).toBeNull();
   });
 
@@ -468,6 +592,12 @@ describe("DrupalResourceItem", () => {
       );
 
     expect(
+      item.relationshipLinkage(
+        "field_image"
+      )
+    ).toBeNull();
+
+    expect(
       item.includedResource(
         "field_image"
       )
@@ -504,6 +634,12 @@ describe("DrupalResourceItem", () => {
         resource,
         undefined
       );
+
+    expect(
+      item.relationshipLinkage(
+        "field_tags"
+      )
+    ).toBeNull();
 
     expect(
       item.includedResources(
@@ -548,6 +684,12 @@ describe("DrupalResourceItem", () => {
         resource,
         undefined
       );
+
+    expect(
+      item.relationshipLinkage(
+        "field_tags"
+      )
+    ).toEqual([]);
 
     expect(
       item.includedResources(
@@ -872,10 +1014,6 @@ describe("DrupalResourceItem", () => {
       field_thumbnail: DrupalJsonApiRelationship;
     };
 
-    type ThumbnailAttributes = {
-      name: string;
-    };
-
     const resource:
       DrupalJsonApiResource<
         EventAttributes,
@@ -951,16 +1089,8 @@ describe("DrupalResourceItem", () => {
         DrupalResourceItem
       );
 
-    /*
-     * The nested relationship is intentionally
-     * accessed through the normalized resource.
-     *
-     * The included-resource relationship typing
-     * will become more precise during the
-     * better typed resource API phase.
-     */
     expect(
-      image?.relationship(
+      image?.relationshipLinkage(
         "field_thumbnail"
       )
     ).toEqual({

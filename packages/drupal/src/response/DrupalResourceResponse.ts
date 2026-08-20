@@ -1,5 +1,6 @@
 import type {
   DrupalJsonApiRelationship,
+  DrupalRelationshipDefinitions,
   DrupalResponse
 } from "../types/DrupalResponse";
 
@@ -12,21 +13,27 @@ import {
 } from "../resource/DrupalResourceItem";
 
 export class DrupalResourceResponse<
-  TAttributes extends Record<string, unknown> = Record<
-    string,
-    unknown
-  >,
+  TAttributes extends Record<string, unknown> =
+    Record<string, unknown>,
+
   TRelationships extends Record<
     string,
     DrupalJsonApiRelationship
-  > = Record<
-    string,
-    DrupalJsonApiRelationship
-  >,
+  > =
+    Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
+
   TIncludedAttributes extends Record<
     string,
     unknown
-  > = Record<string, unknown>
+  > =
+    Record<string, unknown>,
+
+  TRelationshipDefinitions extends
+    DrupalRelationshipDefinitions =
+      Record<string, never>
 > {
   constructor(
     private readonly response: DrupalResponse<
@@ -34,6 +41,7 @@ export class DrupalResourceResponse<
       TRelationships,
       TIncludedAttributes
     >,
+
     private readonly executor?: RequestExecutor
   ) {}
 
@@ -61,12 +69,20 @@ export class DrupalResourceResponse<
     return this.response.data.length;
   }
 
+  /**
+   * Returns a single resource item by index.
+   *
+   * The relationship definition map is preserved so
+   * typed relationship resolution continues through
+   * DrupalResourceItem.
+   */
   getOne(
     index = 0
   ): DrupalResourceItem<
     TAttributes,
     TRelationships,
-    TIncludedAttributes
+    TIncludedAttributes,
+    TRelationshipDefinitions
   > | null {
     const resource =
       this.response.data[index];
@@ -78,24 +94,33 @@ export class DrupalResourceResponse<
     return new DrupalResourceItem<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >(
       resource,
       this.response.included
     );
   }
 
+  /**
+   * Returns all resource items.
+   *
+   * The relationship definition map is preserved for
+   * every returned DrupalResourceItem.
+   */
   getAll(): DrupalResourceItem<
     TAttributes,
     TRelationships,
-    TIncludedAttributes
+    TIncludedAttributes,
+    TRelationshipDefinitions
   >[] {
     return this.response.data.map(
       resource =>
         new DrupalResourceItem<
           TAttributes,
           TRelationships,
-          TIncludedAttributes
+          TIncludedAttributes,
+          TRelationshipDefinitions
         >(
           resource,
           this.response.included
@@ -109,13 +134,15 @@ export class DrupalResourceResponse<
    * Returns null when the current response does not
    * contain a next-page link.
    *
-   * Pagination preserves all response generics.
+   * Pagination preserves all response generics,
+   * including the relationship definition map.
    */
   async next(): Promise<
     DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     > | null
   > {
     if (!this.executor) {
@@ -138,7 +165,8 @@ export class DrupalResourceResponse<
     return new DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >(
       response,
       this.executor
@@ -151,13 +179,15 @@ export class DrupalResourceResponse<
    * Returns null when the current response does not
    * contain a previous-page link.
    *
-   * Pagination preserves all response generics.
+   * Pagination preserves all response generics,
+   * including the relationship definition map.
    */
   async previous(): Promise<
     DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     > | null
   > {
     if (!this.executor) {
@@ -180,13 +210,20 @@ export class DrupalResourceResponse<
     return new DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >(
       response,
       this.executor
     );
   }
 
+  /**
+   * Returns the underlying raw JSON:API response.
+   *
+   * This provides an escape hatch when developers need
+   * the complete Drupal JSON:API representation.
+   */
   toJSON(): DrupalResponse<
     TAttributes,
     TRelationships,

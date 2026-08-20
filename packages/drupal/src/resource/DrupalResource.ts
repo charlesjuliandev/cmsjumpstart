@@ -18,6 +18,7 @@ import {
 import type {
   DrupalJsonApiRelationship,
   DrupalJsonApiResource,
+  DrupalRelationshipDefinitions,
   DrupalResponse
 } from "../types/DrupalResponse";
 
@@ -42,7 +43,11 @@ export class DrupalResource<
     string,
     unknown
   > =
-    Record<string, unknown>
+    Record<string, unknown>,
+
+  TRelationshipDefinitions extends
+    DrupalRelationshipDefinitions =
+      Record<string, never>
 > {
   private query: DrupalQueryBuilder;
 
@@ -146,7 +151,10 @@ export class DrupalResource<
     this.query =
       this.query.filter(
         field,
-        operatorOrValue as DrupalFilterOperator,
+        operatorOrValue as Exclude<
+          DrupalFilterOperator,
+          "IS NULL" | "IS NOT NULL"
+        >,
         value
       );
 
@@ -188,7 +196,8 @@ export class DrupalResource<
     DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >
   > {
     if (!this.executor) {
@@ -215,7 +224,8 @@ export class DrupalResource<
     return new DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >(
       response,
       this.executor
@@ -230,6 +240,10 @@ export class DrupalResource<
    *
    * Prefer response.next() for the convenient
    * response-oriented API.
+   *
+   * The relationship definition map is preserved
+   * by the resource's generic type even though the
+   * low-level executor operates on the raw response.
    */
   async next(
     response: DrupalResponse<
@@ -249,7 +263,8 @@ export class DrupalResource<
     response: DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >
   ): Promise<
     DrupalResponse<
@@ -269,7 +284,8 @@ export class DrupalResource<
       | DrupalResourceResponse<
           TAttributes,
           TRelationships,
-          TIncludedAttributes
+          TIncludedAttributes,
+          TRelationshipDefinitions
         >
   ): Promise<
     DrupalResponse<
@@ -323,7 +339,8 @@ export class DrupalResource<
     response: DrupalResourceResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes
+      TIncludedAttributes,
+      TRelationshipDefinitions
     >
   ): Promise<
     DrupalResponse<
@@ -343,7 +360,8 @@ export class DrupalResource<
       | DrupalResourceResponse<
           TAttributes,
           TRelationships,
-          TIncludedAttributes
+          TIncludedAttributes,
+          TRelationshipDefinitions
         >
   ): Promise<
     DrupalResponse<
@@ -439,6 +457,10 @@ export class DrupalResource<
   /**
    * Resolves a single JSON:API relationship
    * against the response's included resources.
+   *
+   * This is the low-level/raw resource helper.
+   * Typed relationship mapping is provided by
+   * DrupalResourceItem.
    */
   getIncludedResource(
     response: DrupalResponse<
@@ -479,6 +501,10 @@ export class DrupalResource<
   /**
    * Resolves a multi-value JSON:API
    * relationship against included resources.
+   *
+   * This is the low-level/raw resource helper.
+   * Typed relationship mapping is provided by
+   * DrupalResourceItem.
    */
   getIncludedResources(
     response: DrupalResponse<
@@ -522,6 +548,11 @@ export class DrupalResource<
   /**
    * Resolves a typed to-one relationship
    * by name from the first resource.
+   *
+   * This remains a low-level raw-resource API.
+   * For the higher-level typed API, use:
+   *
+   * response.getOne()?.includedResource(...)
    */
   includedResource<
     TRelationship extends keyof TRelationships
@@ -551,6 +582,11 @@ export class DrupalResource<
   /**
    * Resolves a typed to-many relationship
    * by name from the first resource.
+   *
+   * This remains a low-level raw-resource API.
+   * For the higher-level typed API, use:
+   *
+   * response.getOne()?.includedResources(...)
    */
   includedResources<
     TRelationship extends keyof TRelationships

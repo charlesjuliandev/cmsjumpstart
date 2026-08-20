@@ -264,7 +264,7 @@ describe(
           resourceResponse.getOne(0);
 
         expect(
-          event?.relationship(
+          event?.relationshipLinkage(
             "field_image"
           )
         ).toEqual({
@@ -286,7 +286,7 @@ describe(
           resourceResponse.getOne(0);
 
         expect(
-          event?.relationship(
+          event?.relationshipLinkage(
             "field_tags"
           )
         ).toEqual([
@@ -400,7 +400,7 @@ describe(
           resourceResponse.getOne(0);
 
         expect(
-          event?.relationship(
+          event?.relationshipLinkage(
             "missing" as keyof EventRelationships
           )
         ).toBeNull();

@@ -1,18 +1,32 @@
 export interface DrupalJsonApiLink {
   href: string;
+
   meta?: Record<string, unknown>;
 }
 
 export interface DrupalJsonApiLinks {
   self?: DrupalJsonApiLink | string;
-  next?: DrupalJsonApiLink | string | null;
-  prev?: DrupalJsonApiLink | string | null;
-  related?: DrupalJsonApiLink | string;
+
+  next?:
+    | DrupalJsonApiLink
+    | string
+    | null;
+
+  prev?:
+    | DrupalJsonApiLink
+    | string
+    | null;
+
+  related?:
+    | DrupalJsonApiLink
+    | string;
 }
 
 export interface DrupalJsonApiRelationshipIdentifier {
   type: string;
+
   id: string;
+
   meta?: Record<string, unknown>;
 }
 
@@ -69,7 +83,8 @@ export interface DrupalJsonApiRelationship {
  * This is intentionally separate from DrupalJsonApiRelationship.
  *
  * DrupalJsonApiRelationship describes the raw JSON:API
- * response received from Drupal, while
+ * relationship received from Drupal.
+ *
  * DrupalRelationshipDefinition describes the resource
  * that the relationship points to.
  *
@@ -83,18 +98,22 @@ export interface DrupalJsonApiRelationship {
  * to-one or to-many.
  */
 export interface DrupalRelationshipDefinition<
-  TAttributes extends Record<string, unknown> = Record<
+  TAttributes extends Record<
     string,
     unknown
-  >,
+  > = Record<string, unknown>,
+
   TRelationships extends Record<
     string,
-    unknown
+    DrupalJsonApiRelationship
   > = Record<
     string,
-    unknown
+    DrupalJsonApiRelationship
   >,
-  TCardinality extends "one" | "many" = "one"
+
+  TCardinality extends
+    | "one"
+    | "many" = "one"
 > {
   attributes: TAttributes;
 
@@ -107,16 +126,17 @@ export interface DrupalRelationshipDefinition<
  * A convenience type for defining a to-one relationship.
  */
 export type DrupalToOneRelationship<
-  TAttributes extends Record<string, unknown> = Record<
+  TAttributes extends Record<
     string,
     unknown
-  >,
+  > = Record<string, unknown>,
+
   TRelationships extends Record<
     string,
-    unknown
+    DrupalJsonApiRelationship
   > = Record<
     string,
-    unknown
+    DrupalJsonApiRelationship
   >
 > = DrupalRelationshipDefinition<
   TAttributes,
@@ -128,16 +148,17 @@ export type DrupalToOneRelationship<
  * A convenience type for defining a to-many relationship.
  */
 export type DrupalToManyRelationship<
-  TAttributes extends Record<string, unknown> = Record<
+  TAttributes extends Record<
     string,
     unknown
-  >,
+  > = Record<string, unknown>,
+
   TRelationships extends Record<
     string,
-    unknown
+    DrupalJsonApiRelationship
   > = Record<
     string,
-    unknown
+    DrupalJsonApiRelationship
   >
 > = DrupalRelationshipDefinition<
   TAttributes,
@@ -145,8 +166,71 @@ export type DrupalToManyRelationship<
   "many"
 >;
 
+/**
+ * Extracts the related resource attributes from a
+ * relationship definition.
+ */
+export type DrupalRelationshipAttributes<
+  TRelationship
+> =
+  TRelationship extends DrupalRelationshipDefinition<
+    infer TAttributes,
+    Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
+    "one" | "many"
+  >
+    ? TAttributes
+    : Record<string, unknown>;
+
+/**
+ * Extracts the related resource relationships from
+ * a relationship definition.
+ */
+export type DrupalRelationshipRelationships<
+  TRelationship
+> =
+  TRelationship extends DrupalRelationshipDefinition<
+    Record<string, unknown>,
+    infer TRelationships,
+    "one" | "many"
+  >
+    ? TRelationships
+    : Record<
+        string,
+        DrupalJsonApiRelationship
+      >;
+
+/**
+ * Extracts the cardinality from a relationship definition.
+ */
+export type DrupalRelationshipCardinality<
+  TRelationship
+> =
+  TRelationship extends DrupalRelationshipDefinition<
+    Record<string, unknown>,
+    Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
+    infer TCardinality
+  >
+    ? TCardinality
+    : never;
+
+/**
+ * A map of typed relationship definitions.
+ */
+export type DrupalRelationshipDefinitions =
+  Record<
+    string,
+    DrupalRelationshipDefinition
+  >;
+
 export interface DrupalJsonApiResource<
   TAttributes = Record<string, unknown>,
+
   TRelationships = Record<
     string,
     DrupalJsonApiRelationship
@@ -167,11 +251,16 @@ export interface DrupalJsonApiResource<
 
 export interface DrupalResponse<
   TAttributes = Record<string, unknown>,
+
   TRelationships = Record<
     string,
     DrupalJsonApiRelationship
   >,
-  TIncludedAttributes = Record<string, unknown>
+
+  TIncludedAttributes = Record<
+    string,
+    unknown
+  >
 > {
   jsonapi: {
     version: string;
@@ -200,9 +289,13 @@ export function getIncludedResource<
 >(
   response: DrupalResponse<
     Record<string, unknown>,
-    Record<string, DrupalJsonApiRelationship>,
+    Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
     TIncludedAttributes
   >,
+
   relationship:
     | DrupalJsonApiRelationship
     | undefined
@@ -211,7 +304,9 @@ export function getIncludedResource<
 > | null {
   if (
     !relationship?.data ||
-    Array.isArray(relationship.data)
+    Array.isArray(
+      relationship.data
+    )
   ) {
     return null;
   }
@@ -222,8 +317,10 @@ export function getIncludedResource<
   return (
     response.included?.find(
       resource =>
-        resource.type === identifier.type &&
-        resource.id === identifier.id
+        resource.type ===
+          identifier.type &&
+        resource.id ===
+          identifier.id
     ) ?? null
   );
 }
@@ -237,9 +334,13 @@ export function getIncludedResources<
 >(
   response: DrupalResponse<
     Record<string, unknown>,
-    Record<string, DrupalJsonApiRelationship>,
+    Record<
+      string,
+      DrupalJsonApiRelationship
+    >,
     TIncludedAttributes
   >,
+
   relationship:
     | DrupalJsonApiRelationship
     | undefined
@@ -248,7 +349,9 @@ export function getIncludedResources<
 >[] {
   if (
     !relationship?.data ||
-    !Array.isArray(relationship.data)
+    !Array.isArray(
+      relationship.data
+    )
   ) {
     return [];
   }
@@ -261,8 +364,10 @@ export function getIncludedResources<
       resource =>
         identifiers.some(
           identifier =>
-            resource.type === identifier.type &&
-            resource.id === identifier.id
+            resource.type ===
+              identifier.type &&
+            resource.id ===
+              identifier.id
         )
     ) ?? []
   );
