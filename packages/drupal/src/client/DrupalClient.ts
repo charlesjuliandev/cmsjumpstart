@@ -1,7 +1,18 @@
-import type { DrupalClientConfig } from "../types/DrupalClientConfig";
-import { DrupalResource } from "../resource/DrupalResource";
-import { RequestExecutor } from "../executor/RequestExecutor";
-import { encodeBase64 } from "../utils/base64";
+import type {
+  DrupalClientConfig
+} from "../types/DrupalClientConfig";
+
+import {
+  DrupalResource
+} from "../resource/DrupalResource";
+
+import {
+  RequestExecutor
+} from "../executor/RequestExecutor";
+
+import {
+  encodeBase64
+} from "../utils/base64";
 
 import type {
   DrupalJsonApiRelationship,
@@ -41,10 +52,8 @@ export class DrupalClient {
     > = Record<string, unknown>,
 
     TRelationshipDefinitions extends
-      DrupalRelationshipDefinitions = Record<
-      string,
-      never
-    >
+      DrupalRelationshipDefinitions =
+        Record<string, never>
   >(
     resourceType: string
   ) {

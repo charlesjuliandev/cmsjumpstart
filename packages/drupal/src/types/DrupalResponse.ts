@@ -53,7 +53,8 @@ export interface DrupalJsonApiToOneRelationship {
  * identifiers.
  */
 export interface DrupalJsonApiToManyRelationship {
-  data: DrupalJsonApiRelationshipIdentifier[];
+  data:
+    DrupalJsonApiRelationshipIdentifier[];
 
   links?: DrupalJsonApiLinks;
 
@@ -221,11 +222,26 @@ export type DrupalRelationshipCardinality<
 
 /**
  * A map of typed relationship definitions.
+ *
+ * Each relationship may independently be either
+ * to-one or to-many.
+ *
+ * The previous definition used the default
+ * DrupalRelationshipDefinition, whose default cardinality
+ * is "one". That incorrectly rejected relationship maps
+ * containing DrupalToManyRelationship definitions.
  */
 export type DrupalRelationshipDefinitions =
   Record<
     string,
-    DrupalRelationshipDefinition
+    DrupalRelationshipDefinition<
+      Record<string, unknown>,
+      Record<
+        string,
+        DrupalJsonApiRelationship
+      >,
+      "one" | "many"
+    >
   >;
 
 export interface DrupalJsonApiResource<

@@ -1,7 +1,9 @@
 import type {
   DrupalJsonApiRelationship,
+  DrupalJsonApiRelationshipIdentifier,
   DrupalJsonApiResource,
   DrupalRelationshipAttributes,
+  DrupalRelationshipCardinality,
   DrupalRelationshipDefinitions,
   DrupalRelationshipRelationships
 } from "../types/DrupalResponse";
@@ -28,9 +30,19 @@ type DrupalTypedRelationships<
 
 type DrupalTypedAttributes<
   TDefinition
-> = DrupalRelationshipAttributes<
+> =
+  DrupalRelationshipAttributes<
+    TDefinition
+  >;
+
+type DrupalTypedRelationshipLinkage<
   TDefinition
->;
+> =
+  DrupalRelationshipCardinality<
+    TDefinition
+  > extends "many"
+    ? DrupalJsonApiRelationshipIdentifier[]
+    : DrupalJsonApiRelationshipIdentifier | null;
 
 export class DrupalResourceItem<
   TAttributes extends Record<
@@ -52,10 +64,8 @@ export class DrupalResourceItem<
   > = Record<string, unknown>,
 
   TRelationshipDefinitions extends
-    DrupalRelationshipDefinitions = Record<
-    string,
-    never
-  >
+    DrupalRelationshipDefinitions =
+      {}
 > {
   constructor(
     private readonly resource:
@@ -120,26 +130,47 @@ export class DrupalResourceItem<
   /**
    * Returns the raw JSON:API relationship linkage.
    *
-   * This returns the resource identifier(s) from the
-   * relationship's data property without resolving them
-   * against the included collection.
+   * When typed relationship definitions are available,
+   * the relationship cardinality is preserved:
    *
-   * For a to-one relationship:
+   *   to-one  -> identifier | null
+   *   to-many -> identifier[]
    *
-   *   { type, id } | null
-   *
-   * For a to-many relationship:
-   *
-   *   { type, id }[]
+   * For backwards-compatible untyped relationships,
+   * the return value remains the general JSON:API
+   * relationship data union.
+   */
+  relationshipLinkage<
+    TRelationship extends keyof TRelationshipDefinitions
+  >(
+    relationship: TRelationship
+  ): DrupalTypedRelationshipLinkage<
+    TRelationshipDefinitions[
+      TRelationship
+    ]
+  >;
+
+  /**
+   * Backwards-compatible overload for relationships
+   * that have not yet been given typed definitions.
    */
   relationshipLinkage<
     TRelationship extends keyof TRelationships
   >(
     relationship: TRelationship
-  ): TRelationships[TRelationship]["data"] | null {
+  ): TRelationships[
+    TRelationship
+  ]["data"] | null;
+
+  relationshipLinkage(
+    relationship: string
+  ):
+    | DrupalJsonApiRelationshipIdentifier
+    | DrupalJsonApiRelationshipIdentifier[]
+    | null {
     const relationshipData =
       this.resource.relationships?.[
-        relationship
+        relationship as keyof TRelationships
       ]?.data;
 
     if (
@@ -207,7 +238,8 @@ export class DrupalResourceItem<
           string,
           DrupalJsonApiRelationship
         >,
-        TIncludedAttributes
+        TIncludedAttributes,
+        DrupalRelationshipDefinitions
       >
     | null {
     const relationshipValue =
@@ -240,7 +272,15 @@ export class DrupalResourceItem<
       return null;
     }
 
-    return new DrupalResourceItem(
+    return new DrupalResourceItem<
+      Record<string, unknown>,
+      Record<
+        string,
+        DrupalJsonApiRelationship
+      >,
+      TIncludedAttributes,
+      DrupalRelationshipDefinitions
+    >(
       includedResource,
       this.included
     );
@@ -296,14 +336,15 @@ export class DrupalResourceItem<
   includedResources(
     relationship: string
   ):
-    | DrupalResourceItem<
-        Record<string, unknown>,
-        Record<
-          string,
-          DrupalJsonApiRelationship
-        >,
-        TIncludedAttributes
-      >[] {
+    DrupalResourceItem<
+      Record<string, unknown>,
+      Record<
+        string,
+        DrupalJsonApiRelationship
+      >,
+      TIncludedAttributes,
+      DrupalRelationshipDefinitions
+    >[] {
     const relationshipValue =
       this.resource.relationships?.[
         relationship as keyof TRelationships
@@ -339,7 +380,15 @@ export class DrupalResourceItem<
 
     return resources.map(
       resource =>
-        new DrupalResourceItem(
+        new DrupalResourceItem<
+          Record<string, unknown>,
+          Record<
+            string,
+            DrupalJsonApiRelationship
+          >,
+          TIncludedAttributes,
+          DrupalRelationshipDefinitions
+        >(
           resource,
           this.included
         )
