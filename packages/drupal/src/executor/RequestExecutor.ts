@@ -1,24 +1,36 @@
 import type { DrupalResponse } from "../types";
+
 import type { AuthProvider } from "../auth/AuthProvider";
+
 import type {
   DrupalJsonApiRelationship,
   DrupalJsonApiLink
 } from "../types/DrupalResponse";
+
+export interface RequestOptions {
+  headers?: Record<string, string>;
+  cache?: RequestCache;
+}
 
 export interface RequestExecutorOptions {
   baseUrl: string;
   headers?: Record<string, string>;
   auth?: AuthProvider;
   timeout?: number;
+  request?: RequestOptions;
 }
 
 export class RequestExecutor {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
   private readonly timeout: number;
+  private readonly request: RequestOptions;
 
-  constructor(options: RequestExecutorOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, "");
+  constructor(
+    options: RequestExecutorOptions
+  ) {
+    this.baseUrl =
+      options.baseUrl.replace(/\/$/, "");
 
     this.headers = {
       Accept: "application/vnd.api+json",
@@ -28,10 +40,15 @@ export class RequestExecutor {
 
     this.timeout =
       options.timeout ?? 15000;
+
+    this.request =
+      options.request ?? {};
   }
 
   getHeaders(): Record<string, string> {
-    return { ...this.headers };
+    return {
+      ...this.headers
+    };
   }
 
   async get<
@@ -52,24 +69,44 @@ export class RequestExecutor {
     >
   > {
     const url =
-      this.buildUrl(path, params);
+      this.buildUrl(
+        path,
+        params
+      );
 
     const controller =
       new AbortController();
 
     const timeoutId =
       setTimeout(
-        () => controller.abort(),
+        () =>
+          controller.abort(),
         this.timeout
       );
 
     try {
+      const requestInit: RequestInit = {
+        method: "GET",
+        headers: {
+          ...this.request.headers,
+          ...this.headers
+        },
+        signal:
+          controller.signal
+      };
+
+      if (
+        this.request.cache !== undefined
+      ) {
+        requestInit.cache =
+          this.request.cache;
+      }
+
       const response =
-        await fetch(url, {
-          method: "GET",
-          headers: this.headers,
-          signal: controller.signal
-        });
+        await fetch(
+          url,
+          requestInit
+        );
 
       if (!response.ok) {
         throw new Error(
@@ -124,7 +161,9 @@ export class RequestExecutor {
       TAttributes,
       TRelationships,
       TIncludedAttributes
-    >(response.links?.next);
+    >(
+      response.links?.next
+    );
   }
 
   async getPrevious<
@@ -151,7 +190,9 @@ export class RequestExecutor {
       TAttributes,
       TRelationships,
       TIncludedAttributes
-    >(response.links?.prev);
+    >(
+      response.links?.prev
+    );
   }
 
   private async getPage<
@@ -162,7 +203,10 @@ export class RequestExecutor {
     >,
     TIncludedAttributes = Record<string, unknown>
   >(
-    link?: DrupalJsonApiLink | string | null
+    link?:
+      | DrupalJsonApiLink
+      | string
+      | null
   ): Promise<
     DrupalResponse<
       TAttributes,
@@ -190,13 +234,15 @@ export class RequestExecutor {
     path: string,
     params?: URLSearchParams
   ): URL {
-    const url = new URL(
-      path,
-      `${this.baseUrl}/`
-    );
+    const url =
+      new URL(
+        path,
+        `${this.baseUrl}/`
+      );
 
     if (params) {
-      url.search = params.toString();
+      url.search =
+        params.toString();
     }
 
     return url;
