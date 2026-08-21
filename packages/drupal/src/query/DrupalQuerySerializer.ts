@@ -71,11 +71,10 @@ export class DrupalQuerySerializer {
            * filter[field]=value
            */
           if (operator === "=") {
-            params.set(
+            DrupalQuerySerializer.setValue(
+              params,
               `filter[${field}]`,
-              DrupalQuerySerializer.serializeValue(
-                value
-              )
+              value
             );
 
             return;
@@ -113,11 +112,10 @@ export class DrupalQuerySerializer {
             return;
           }
 
-          params.set(
+          DrupalQuerySerializer.setValue(
+            params,
             `${conditionPrefix}[value]`,
-            DrupalQuerySerializer.serializeValue(
-              value
-            )
+            value
           );
         }
       );
@@ -126,13 +124,27 @@ export class DrupalQuerySerializer {
     return params;
   }
 
-  private static serializeValue(
+  private static setValue(
+    params: URLSearchParams,
+    key: string,
     value: DrupalFilterValue | undefined
-  ): string {
+  ): void {
     if (Array.isArray(value)) {
-      return value.join(",");
+      value.forEach(
+        (item, index) => {
+          params.set(
+            `${key}[${index + 1}]`,
+            String(item)
+          );
+        }
+      );
+
+      return;
     }
 
-    return String(value);
+    params.set(
+      key,
+      String(value)
+    );
   }
 }

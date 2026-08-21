@@ -114,12 +114,9 @@ export class DrupalQueryBuilder {
       );
 
     /*
-     * A two-argument call is normally an
-     * equality filter.
-     *
-     * IS NULL and IS NOT NULL are the
-     * intentional exceptions because they
-     * do not have a filter value.
+     * A two-argument call is an equality
+     * filter unless the value is one of the
+     * unary NULL operators.
      */
     if (
       value === undefined &&
@@ -131,24 +128,17 @@ export class DrupalQueryBuilder {
         )
       )
     ) {
-      return new DrupalQueryBuilder(
-        this.resourceType,
-        {
-          ...this.options,
-
-          filters: [
-            ...(this.options.filters ?? []),
-
-            {
-              field,
-              operator: "=",
-              value: operatorOrValue
-            }
-          ]
-        }
-      );
+      return this.addFilter({
+        field,
+        operator: "=",
+        value: operatorOrValue
+      });
     }
 
+    /*
+     * IS NULL and IS NOT NULL do not accept
+     * a filter value.
+     */
     if (
       isOperator &&
       (
@@ -156,21 +146,10 @@ export class DrupalQueryBuilder {
         operatorOrValue === "IS NOT NULL"
       )
     ) {
-      return new DrupalQueryBuilder(
-        this.resourceType,
-        {
-          ...this.options,
-
-          filters: [
-            ...(this.options.filters ?? []),
-
-            {
-              field,
-              operator: operatorOrValue
-            }
-          ]
-        }
-      );
+      return this.addFilter({
+        field,
+        operator: operatorOrValue
+      });
     }
 
     if (!isOperator) {
@@ -187,22 +166,22 @@ export class DrupalQueryBuilder {
       );
     }
 
-    return new DrupalQueryBuilder(
-      this.resourceType,
-      {
-        ...this.options,
+    const comparisonOperator =
+      operatorOrValue as Exclude<
+        DrupalFilterOperator,
+        "IS NULL" | "IS NOT NULL"
+      >;
 
-        filters: [
-          ...(this.options.filters ?? []),
-
-          {
-            field,
-            operator: operatorOrValue,
-            value
-          }
-        ]
-      }
+    this.validateFilterValue(
+      comparisonOperator,
+      value
     );
+
+    return this.addFilter({
+      field,
+      operator: comparisonOperator,
+      value
+    });
   }
 
   sort(
@@ -247,6 +226,74 @@ export class DrupalQueryBuilder {
 
   getOptions(): DrupalQueryOptions {
     return this.options;
+  }
+
+  private addFilter(
+    filter: {
+      field: string;
+      operator: DrupalFilterOperator;
+      value?: DrupalFilterValue;
+    }
+  ): DrupalQueryBuilder {
+    return new DrupalQueryBuilder(
+      this.resourceType,
+      {
+        ...this.options,
+
+        filters: [
+          ...(this.options.filters ?? []),
+          filter
+        ]
+      }
+    );
+  }
+
+  private validateFilterValue(
+    operator: Exclude<
+      DrupalFilterOperator,
+      "IS NULL" | "IS NOT NULL"
+    >,
+    value: DrupalFilterValue
+  ): void {
+    const requiresArray =
+      operator === "IN" ||
+      operator === "NOT IN" ||
+      operator === "BETWEEN" ||
+      operator === "NOT BETWEEN";
+
+    if (requiresArray) {
+      if (!Array.isArray(value)) {
+        throw new Error(
+          `Filter "${operator}" requires an array value.`
+        );
+      }
+
+      if (value.length === 0) {
+        throw new Error(
+          `Filter "${operator}" requires at least one value.`
+        );
+      }
+
+      if (
+        (
+          operator === "BETWEEN" ||
+          operator === "NOT BETWEEN"
+        ) &&
+        value.length !== 2
+      ) {
+        throw new Error(
+          `Filter "${operator}" requires exactly two values.`
+        );
+      }
+
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      throw new Error(
+        `Filter "${operator}" requires a scalar value.`
+      );
+    }
   }
 
   private isFilterOperator(
