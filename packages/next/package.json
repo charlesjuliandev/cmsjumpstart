@@ -1,0 +1,23 @@
+{
+  "name": "@cmsjumpstart/next",
+  "version": "0.1.0",
+  "description": "Next.js integration for CMSJumpstart",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm clean && tsc"
+  },
+  "dependencies": {
+    "@cmsjumpstart/core": "workspace:*",
+    "@cmsjumpstart/drupal": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

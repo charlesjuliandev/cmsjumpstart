@@ -30,7 +30,7 @@ export class DrupalClient {
       executor ??
       new RequestExecutor({
         baseUrl: config.baseUrl,
-        headers: this.buildHeaders()
+        headers: this.getHeaders()
       });
   }
 
@@ -68,10 +68,11 @@ export class DrupalClient {
     );
   }
 
-  private buildHeaders(): Record<string, string> {
+  getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: "application/vnd.api+json",
-      ...this.config.headers
+      ...this.config.headers,
+      ...this.config.request?.headers
     };
 
     if (!this.config.auth) {
