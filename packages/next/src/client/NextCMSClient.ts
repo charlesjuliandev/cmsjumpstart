@@ -11,6 +11,10 @@ import type {
   NextCMSConfig
 } from "../config/NextCMSConfig";
 
+import {
+  NextCMSResource
+} from "../resource/NextCMSResource";
+
 export class NextCMSClient {
   private readonly drupal: DrupalClient;
 
@@ -45,16 +49,27 @@ export class NextCMSClient {
         Record<string, never>
   >(
     resourceType: string
-  ) {
-    return this.drupal.resource<
-      TAttributes,
-      TRelationships,
-      TIncludedAttributes,
-      TRelationshipDefinitions
-    >(resourceType);
+  ): NextCMSResource<
+    TAttributes,
+    TRelationships,
+    TIncludedAttributes,
+    TRelationshipDefinitions
+  > {
+    const resource =
+      this.drupal.resource<
+        TAttributes,
+        TRelationships,
+        TIncludedAttributes,
+        TRelationshipDefinitions
+      >(resourceType);
+
+    return new NextCMSResource(
+      resource
+    );
   }
 
   getHeaders(): Record<string, string> {
     return this.drupal.getHeaders();
   }
 }
+
