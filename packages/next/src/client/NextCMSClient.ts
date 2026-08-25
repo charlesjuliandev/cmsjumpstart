@@ -17,21 +17,10 @@ export class NextCMSClient {
   constructor(
     config: NextCMSConfig
   ) {
-    const drupalConfig =
-      config.request?.headers
-        ? {
-            ...config.drupal,
-            request: {
-              headers:
-                config.request.headers
-            }
-          }
-        : config.drupal;
-
     this.drupal =
-      new DrupalClient(
-        drupalConfig
-      );
+      new DrupalClient({
+        ...config.drupal
+      });
   }
 
   resource<

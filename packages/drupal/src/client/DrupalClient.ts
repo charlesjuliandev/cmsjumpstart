@@ -10,6 +10,10 @@ import {
   RequestExecutor
 } from "../executor/RequestExecutor";
 
+import type {
+  RequestExecutorOptions
+} from "../executor/RequestExecutor";
+
 import {
   encodeBase64
 } from "../utils/base64";
@@ -26,12 +30,25 @@ export class DrupalClient {
     private readonly config: DrupalClientConfig,
     executor?: RequestExecutor
   ) {
+    if (executor) {
+      this.executor = executor;
+      return;
+    }
+
+    const executorOptions: RequestExecutorOptions = {
+      baseUrl: config.baseUrl,
+      headers: this.getHeaders()
+    };
+
+    if (config.request !== undefined) {
+      executorOptions.request =
+        config.request;
+    }
+
     this.executor =
-      executor ??
-      new RequestExecutor({
-        baseUrl: config.baseUrl,
-        headers: this.getHeaders()
-      });
+      new RequestExecutor(
+        executorOptions
+      );
   }
 
   resource<
@@ -106,3 +123,4 @@ export class DrupalClient {
     return headers;
   }
 }
+

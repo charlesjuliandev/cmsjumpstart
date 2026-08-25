@@ -49,15 +49,19 @@ describe(
           );
 
         expect(resource).toBeDefined();
+
         expect(
           typeof resource.get
         ).toBe("function");
+
         expect(
           typeof resource.filter
         ).toBe("function");
+
         expect(
           typeof resource.sort
         ).toBe("function");
+
         expect(
           typeof resource.limit
         ).toBe("function");
@@ -71,14 +75,14 @@ describe(
           new NextCMSClient({
             drupal: {
               baseUrl:
-                "https://example.com"
-            },
-            request: {
-              headers: {
-                "X-Consumer-ID":
-                  "cmsjumpstart-test",
-                "api-key":
-                  "test-key"
+                "https://example.com",
+              request: {
+                headers: {
+                  "X-Consumer-ID":
+                    "cmsjumpstart-test",
+                  "api-key":
+                    "test-key"
+                }
               }
             }
           });
@@ -121,5 +125,27 @@ describe(
         });
       }
     );
+
+    it(
+      "preserves the request cache option",
+      () => {
+        const client =
+          new NextCMSClient({
+            drupal: {
+              baseUrl:
+                "https://example.com",
+              request: {
+                cache:
+                  "force-cache"
+              }
+            }
+          });
+
+        expect(client).toBeInstanceOf(
+          NextCMSClient
+        );
+      }
+    );
   }
 );
+

@@ -1,25 +1,15 @@
 import {
-DrupalClient
-} from "@cmsjumpstart/drupal";
+  NextCMSClient
+} from "../client/NextCMSClient";
 
 import type {
-NextCMSConfig
+  NextCMSConfig
 } from "../config/NextCMSConfig";
 
 export function createNextCMS(
-config: NextCMSConfig
-): DrupalClient {
-const drupalConfig = {
-...config.drupal
-};
-
-if (config.request?.headers !== undefined) {
-drupalConfig.request = {
-headers: config.request.headers
-};
-}
-
-return new DrupalClient(
-drupalConfig
-);
+  config: NextCMSConfig
+): NextCMSClient {
+  return new NextCMSClient(
+    config
+  );
 }

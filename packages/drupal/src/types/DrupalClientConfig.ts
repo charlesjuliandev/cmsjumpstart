@@ -2,6 +2,7 @@ import type { DrupalAuth } from "./Auth";
 
 export interface DrupalRequestOptions {
   headers?: Record<string, string>;
+  cache?: RequestCache;
 }
 
 export interface DrupalClientConfig {
@@ -10,3 +11,4 @@ export interface DrupalClientConfig {
   headers?: Record<string, string>;
   request?: DrupalRequestOptions;
 }
+
