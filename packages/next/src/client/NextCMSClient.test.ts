@@ -6,6 +6,10 @@ import {
 
 import { NextCMSClient } from "./NextCMSClient";
 
+import {
+  NextCMSResource
+} from "../resource/NextCMSResource";
+
 describe(
   "NextCMSClient",
   () => {
@@ -65,6 +69,10 @@ describe(
         expect(
           typeof resource.limit
         ).toBe("function");
+
+        expect(resource).toBeInstanceOf(
+          NextCMSResource
+        );
       }
     );
 

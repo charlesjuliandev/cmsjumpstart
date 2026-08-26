@@ -1,6 +1,10 @@
-import type { DrupalResponse } from "../types";
+import type {
+  DrupalResponse
+} from "../types";
 
-import type { AuthProvider } from "../auth/AuthProvider";
+import type {
+  AuthProvider
+} from "../auth/AuthProvider";
 
 import type {
   DrupalJsonApiRelationship,
@@ -9,32 +13,48 @@ import type {
 
 export interface RequestOptions {
   headers?: Record<string, string>;
+
   cache?: RequestCache;
 }
 
 export interface RequestExecutorOptions {
   baseUrl: string;
+
   headers?: Record<string, string>;
+
   auth?: AuthProvider;
+
   timeout?: number;
+
   request?: RequestOptions;
 }
 
 export class RequestExecutor {
   private readonly baseUrl: string;
-  private readonly headers: Record<string, string>;
+
+  private readonly headers:
+    Record<string, string>;
+
   private readonly timeout: number;
-  private readonly request: RequestOptions;
+
+  private readonly request:
+    RequestOptions;
 
   constructor(
     options: RequestExecutorOptions
   ) {
     this.baseUrl =
-      options.baseUrl.replace(/\/$/, "");
+      options.baseUrl.replace(
+        /\/$/,
+        ""
+      );
 
     this.headers = {
-      Accept: "application/vnd.api+json",
+      Accept:
+        "application/vnd.api+json",
+
       ...options.headers,
+
       ...(options.auth?.getHeaders() ?? {})
     };
 
@@ -52,14 +72,19 @@ export class RequestExecutor {
   }
 
   async get<
-    TAttributes = Record<string, unknown>,
+    TAttributes =
+      Record<string, unknown>,
+
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
     >,
-    TIncludedAttributes = Record<string, unknown>
+
+    TIncludedAttributes =
+      Record<string, unknown>
   >(
     path: string,
+
     params?: URLSearchParams
   ): Promise<
     DrupalResponse<
@@ -85,22 +110,10 @@ export class RequestExecutor {
       );
 
     try {
-      const requestInit: RequestInit = {
-        method: "GET",
-        headers: {
-          ...this.request.headers,
-          ...this.headers
-        },
-        signal:
+      const requestInit =
+        this.createRequestInit(
           controller.signal
-      };
-
-      if (
-        this.request.cache !== undefined
-      ) {
-        requestInit.cache =
-          this.request.cache;
-      }
+        );
 
       const response =
         await fetch(
@@ -133,17 +146,23 @@ export class RequestExecutor {
 
       throw error;
     } finally {
-      clearTimeout(timeoutId);
+      clearTimeout(
+        timeoutId
+      );
     }
   }
 
   async getNext<
-    TAttributes = Record<string, unknown>,
+    TAttributes =
+      Record<string, unknown>,
+
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
     >,
-    TIncludedAttributes = Record<string, unknown>
+
+    TIncludedAttributes =
+      Record<string, unknown>
   >(
     response: DrupalResponse<
       TAttributes,
@@ -167,12 +186,16 @@ export class RequestExecutor {
   }
 
   async getPrevious<
-    TAttributes = Record<string, unknown>,
+    TAttributes =
+      Record<string, unknown>,
+
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
     >,
-    TIncludedAttributes = Record<string, unknown>
+
+    TIncludedAttributes =
+      Record<string, unknown>
   >(
     response: DrupalResponse<
       TAttributes,
@@ -195,13 +218,49 @@ export class RequestExecutor {
     );
   }
 
+  /**
+   * Builds the RequestInit used by fetch.
+   *
+   * Subclasses can override this method to
+   * extend request behavior for specific
+   * runtimes such as Next.js.
+   */
+  protected createRequestInit(
+    signal: AbortSignal
+  ): RequestInit {
+    const requestInit: RequestInit = {
+      method: "GET",
+
+      headers: {
+        ...this.request.headers,
+
+        ...this.headers
+      },
+
+      signal
+    };
+
+    if (
+      this.request.cache !== undefined
+    ) {
+      requestInit.cache =
+        this.request.cache;
+    }
+
+    return requestInit;
+  }
+
   private async getPage<
-    TAttributes = Record<string, unknown>,
+    TAttributes =
+      Record<string, unknown>,
+
     TRelationships = Record<
       string,
       DrupalJsonApiRelationship
     >,
-    TIncludedAttributes = Record<string, unknown>
+
+    TIncludedAttributes =
+      Record<string, unknown>
   >(
     link?:
       | DrupalJsonApiLink
@@ -232,6 +291,7 @@ export class RequestExecutor {
 
   private buildUrl(
     path: string,
+
     params?: URLSearchParams
   ): URL {
     const url =

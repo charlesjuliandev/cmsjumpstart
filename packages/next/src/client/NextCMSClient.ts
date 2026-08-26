@@ -7,29 +7,61 @@ import type {
   DrupalRelationshipDefinitions
 } from "@cmsjumpstart/drupal";
 
-import type {
-  NextCMSConfig
-} from "../config/NextCMSConfig";
+import {
+  NextRequestExecutor
+} from "../executor/NextRequestExecutor";
 
 import {
   NextCMSResource
 } from "../resource/NextCMSResource";
 
+import type {
+  NextCMSConfig
+} from "../config/NextCMSConfig";
+
 export class NextCMSClient {
-  private readonly drupal: DrupalClient;
+  private readonly drupal:
+    DrupalClient;
 
   constructor(
     config: NextCMSConfig
   ) {
+    const drupalConfig =
+      config.drupal;
+
+    const executorOptions = {
+      baseUrl:
+        drupalConfig.baseUrl,
+      ...(drupalConfig.headers !== undefined
+        ? {
+            headers:
+              drupalConfig.headers
+          }
+        : {}),
+      ...(drupalConfig.request !== undefined
+        ? {
+            request:
+              drupalConfig.request
+          }
+        : {})
+    };
+
+    const executor =
+      new NextRequestExecutor(
+        executorOptions
+      );
+
     this.drupal =
-      new DrupalClient({
-        ...config.drupal
-      });
+      new DrupalClient(
+        drupalConfig,
+        executor
+      );
   }
 
   resource<
-    TAttributes extends Record<string, unknown> =
-      Record<string, unknown>,
+    TAttributes extends
+      Record<string, unknown> =
+        Record<string, unknown>,
 
     TRelationships extends Record<
       string,
@@ -39,10 +71,9 @@ export class NextCMSClient {
       DrupalJsonApiRelationship
     >,
 
-    TIncludedAttributes extends Record<
-      string,
-      unknown
-    > = Record<string, unknown>,
+    TIncludedAttributes extends
+      Record<string, unknown> =
+        Record<string, unknown>,
 
     TRelationshipDefinitions extends
       DrupalRelationshipDefinitions =
@@ -68,7 +99,8 @@ export class NextCMSClient {
     );
   }
 
-  getHeaders(): Record<string, string> {
+  getHeaders():
+    Record<string, string> {
     return this.drupal.getHeaders();
   }
 }
