@@ -45,7 +45,7 @@ export class RequestExecutor {
   ) {
     this.baseUrl =
       options.baseUrl.replace(
-        /\/$/,
+        /\/+$/,
         ""
       );
 
@@ -84,6 +84,7 @@ export class RequestExecutor {
       Record<string, unknown>
   >(
     path: string,
+
     params?: URLSearchParams
   ): Promise<
     DrupalResponse<
@@ -103,8 +104,9 @@ export class RequestExecutor {
 
     const timeoutId =
       setTimeout(
-        () =>
-          controller.abort(),
+        () => {
+          controller.abort();
+        },
         this.timeout
       );
 
@@ -121,8 +123,9 @@ export class RequestExecutor {
         );
 
       if (!response.ok) {
-        throw new Error(
-          `Request failed with status ${response.status}`
+        throw await this.createResponseError(
+          response,
+          url
         );
       }
 
@@ -145,7 +148,9 @@ export class RequestExecutor {
 
       throw error;
     } finally {
-      clearTimeout(timeoutId);
+      clearTimeout(
+        timeoutId
+      );
     }
   }
 
@@ -157,6 +162,7 @@ export class RequestExecutor {
 
       headers: {
         ...this.request.headers,
+
         ...this.headers
       },
 
@@ -278,6 +284,46 @@ export class RequestExecutor {
       TIncludedAttributes
     >(href);
   }
+
+  
+  private async createResponseError(
+    response: Response,
+    url: URL
+  ): Promise<Error> {
+    let message =
+      `Request failed with status ${response.status}`;
+
+    const statusText =
+      typeof response.statusText ===
+      "string"
+        ? response.statusText.trim()
+        : "";
+
+    if (statusText) {
+      message +=
+        ` ${statusText}`;
+    }
+
+    try {
+      const body =
+        await response.text();
+
+      if (body.trim()) {
+        message +=
+          `: ${body.trim()}`;
+      }
+    } catch {
+      // Ignore response-body parsing
+      // failures. The HTTP status is
+      // still useful to the caller.
+    }
+
+    return new Error(
+      `${message} (${url})`
+    );
+  }
+
+
 
   private buildUrl(
     path: string,
