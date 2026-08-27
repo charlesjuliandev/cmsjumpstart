@@ -6,6 +6,12 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -14,10 +20,10 @@
     "build": "pnpm clean && tsc"
   },
   "dependencies": {
-    "@cmsjumpstart/core": "workspace:*",
     "@cmsjumpstart/drupal": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
   }
 }
+

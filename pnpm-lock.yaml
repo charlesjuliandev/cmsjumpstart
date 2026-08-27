@@ -241,9 +241,6 @@ importers:
 
   packages/next:
     dependencies:
-      '@cmsjumpstart/core':
-        specifier: workspace:*
-        version: link:../core
       '@cmsjumpstart/drupal':
         specifier: workspace:*
         version: link:../drupal

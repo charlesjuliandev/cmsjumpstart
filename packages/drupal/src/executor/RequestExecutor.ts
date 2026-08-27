@@ -84,7 +84,6 @@ export class RequestExecutor {
       Record<string, unknown>
   >(
     path: string,
-
     params?: URLSearchParams
   ): Promise<
     DrupalResponse<
@@ -146,10 +145,33 @@ export class RequestExecutor {
 
       throw error;
     } finally {
-      clearTimeout(
-        timeoutId
-      );
+      clearTimeout(timeoutId);
     }
+  }
+
+  protected createRequestInit(
+    signal: AbortSignal
+  ): RequestInit {
+    const requestInit: RequestInit = {
+      method: "GET",
+
+      headers: {
+        ...this.request.headers,
+        ...this.headers
+      },
+
+      signal
+    };
+
+    if (
+      this.request.cache !==
+      undefined
+    ) {
+      requestInit.cache =
+        this.request.cache;
+    }
+
+    return requestInit;
   }
 
   async getNext<
@@ -218,38 +240,6 @@ export class RequestExecutor {
     );
   }
 
-  /**
-   * Builds the RequestInit used by fetch.
-   *
-   * Subclasses can override this method to
-   * extend request behavior for specific
-   * runtimes such as Next.js.
-   */
-  protected createRequestInit(
-    signal: AbortSignal
-  ): RequestInit {
-    const requestInit: RequestInit = {
-      method: "GET",
-
-      headers: {
-        ...this.request.headers,
-
-        ...this.headers
-      },
-
-      signal
-    };
-
-    if (
-      this.request.cache !== undefined
-    ) {
-      requestInit.cache =
-        this.request.cache;
-    }
-
-    return requestInit;
-  }
-
   private async getPage<
     TAttributes =
       Record<string, unknown>,
@@ -291,7 +281,6 @@ export class RequestExecutor {
 
   private buildUrl(
     path: string,
-
     params?: URLSearchParams
   ): URL {
     const url =
@@ -308,3 +297,4 @@ export class RequestExecutor {
     return url;
   }
 }
+

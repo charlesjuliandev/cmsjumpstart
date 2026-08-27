@@ -68,6 +68,55 @@ describe(
     );
 
     it(
+      "passes the Drupal cache option to fetch",
+      async () => {
+        const fetchMock =
+          vi
+            .fn()
+            .mockResolvedValue({
+              ok: true,
+
+              json:
+                vi.fn()
+                  .mockResolvedValue({
+                    data: []
+                  })
+            });
+
+        vi.stubGlobal(
+          "fetch",
+          fetchMock
+        );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com",
+
+            request: {
+              cache:
+                "force-cache"
+            }
+          });
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        expect(fetchMock)
+          .toHaveBeenCalledWith(
+            expect.any(URL),
+            expect.objectContaining({
+              cache:
+                "force-cache"
+            })
+          );
+
+        vi.unstubAllGlobals();
+      }
+    );
+
+    it(
       "passes Next.js revalidation options to fetch",
       async () => {
         const fetchMock =
@@ -233,6 +282,71 @@ describe(
     );
 
     it(
+      "passes Drupal cache and Next.js options together",
+      async () => {
+        const fetchMock =
+          vi
+            .fn()
+            .mockResolvedValue({
+              ok: true,
+
+              json:
+                vi.fn()
+                  .mockResolvedValue({
+                    data: []
+                  })
+            });
+
+        vi.stubGlobal(
+          "fetch",
+          fetchMock
+        );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com",
+
+            request: {
+              cache:
+                "force-cache",
+
+              revalidate:
+                3600,
+
+              tags: [
+                "events"
+              ]
+            }
+          });
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        expect(fetchMock)
+          .toHaveBeenCalledWith(
+            expect.any(URL),
+            expect.objectContaining({
+              cache:
+                "force-cache",
+
+              next: {
+                revalidate:
+                  3600,
+
+                tags: [
+                  "events"
+                ]
+              }
+            })
+          );
+
+        vi.unstubAllGlobals();
+      }
+    );
+
+    it(
       "preserves Drupal request headers",
       async () => {
         const fetchMock =
@@ -303,3 +417,4 @@ describe(
     );
   }
 );
+

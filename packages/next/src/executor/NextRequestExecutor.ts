@@ -48,7 +48,6 @@ export class NextRequestExecutor
     ) {
       super({
         ...options,
-
         request:
           options.request
       });
@@ -68,30 +67,33 @@ export class NextRequestExecutor
         signal
       ) as NextFetchRequestInit;
 
+    const next: NonNullable<
+      NextFetchRequestInit["next"]
+    > = {};
+
     if (
       this.nextRequest.revalidate !==
       undefined
     ) {
-      requestInit.next = {
-        ...(requestInit.next ?? {}),
-
-        revalidate:
-          this.nextRequest.revalidate
-      };
+      next.revalidate =
+        this.nextRequest.revalidate;
     }
 
     if (
       this.nextRequest.tags !==
       undefined
     ) {
-      requestInit.next = {
-        ...(requestInit.next ?? {}),
+      next.tags =
+        this.nextRequest.tags;
+    }
 
-        tags:
-          this.nextRequest.tags
-      };
+    if (
+      Object.keys(next).length > 0
+    ) {
+      requestInit.next = next;
     }
 
     return requestInit;
   }
 }
+
