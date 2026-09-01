@@ -10,6 +10,10 @@ import type {
 } from "@cmsjumpstart/drupal";
 
 import {
+  DrupalResourceResponse
+} from "@cmsjumpstart/drupal";
+
+import {
   NextCMSResource
 } from "./NextCMSResource";
 
@@ -118,20 +122,24 @@ describe(
           );
 
         nextResource.include(
-          "field_image"
+          "field_image",
+          "field_author"
         );
 
         nextResource.fields(
-          "title"
+          "title",
+          "created"
         );
 
         nextResource.filter(
-          "status",
-          true
+          "title",
+          "CONTAINS",
+          "Drupal"
         );
 
         nextResource.sort(
-          "-created"
+          "-created",
+          "title"
         );
 
         nextResource.page(2);
@@ -141,26 +149,30 @@ describe(
         expect(
           resource.include
         ).toHaveBeenCalledWith(
-          "field_image"
+          "field_image",
+          "field_author"
         );
 
         expect(
           resource.fields
         ).toHaveBeenCalledWith(
-          "title"
+          "title",
+          "created"
         );
 
         expect(
           resource.filter
         ).toHaveBeenCalledWith(
-          "status",
-          true
+          "title",
+          "CONTAINS",
+          "Drupal"
         );
 
         expect(
           resource.sort
         ).toHaveBeenCalledWith(
-          "-created"
+          "-created",
+          "title"
         );
 
         expect(
@@ -173,6 +185,37 @@ describe(
           resource.limit
         ).toHaveBeenCalledWith(
           10
+        );
+      }
+    );
+
+    it(
+      "delegates getQuery to DrupalResource",
+      () => {
+        const query =
+          {};
+
+        const resource =
+          createResource();
+
+        resource.getQuery =
+          vi.fn().mockReturnValue(
+            query
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.getQuery()
+        ).toBe(query);
+
+        expect(
+          resource.getQuery
+        ).toHaveBeenCalledTimes(
+          1
         );
       }
     );
@@ -209,6 +252,510 @@ describe(
           resource.get
         ).toHaveBeenCalledTimes(
           1
+        );
+      }
+    );
+
+    it(
+      "delegates next with a raw Drupal response",
+      async () => {
+        const response = {
+          data: [],
+          links: {
+            next: {
+              href:
+                "https://example.com/next"
+            }
+          }
+        };
+
+        const nextResponse = {
+          data: [
+            {
+              type: "node--page",
+              id: "123"
+            }
+          ]
+        };
+
+        const resource =
+          createResource();
+
+        resource.next =
+          vi.fn()
+            .mockResolvedValue(
+              nextResponse
+            );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        await expect(
+          nextResource.next(
+            response
+          )
+        ).resolves.toBe(
+          nextResponse
+        );
+
+        expect(
+          resource.next
+        ).toHaveBeenCalledWith(
+          response
+        );
+      }
+    );
+
+    it(
+      "delegates next with a DrupalResourceResponse",
+      async () => {
+        const rawResponse = {
+          data: [],
+          links: {
+            next: {
+              href:
+                "https://example.com/next"
+            }
+          }
+        };
+
+        const nextResponse = {
+          data: [
+            {
+              type: "node--page",
+              id: "123"
+            }
+          ]
+        };
+
+        const resource =
+          createResource();
+
+        resource.next =
+          vi.fn()
+            .mockResolvedValue(
+              nextResponse
+            );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        const response =
+          new DrupalResourceResponse(
+            rawResponse,
+            {} as never
+          );
+
+        await expect(
+          nextResource.next(
+            response
+          )
+        ).resolves.toBe(
+          nextResponse
+        );
+
+        expect(
+          resource.next
+        ).toHaveBeenCalledWith(
+          rawResponse
+        );
+      }
+    );
+
+    it(
+      "delegates previous with a raw Drupal response",
+      async () => {
+        const response = {
+          data: [],
+          links: {
+            prev: {
+              href:
+                "https://example.com/previous"
+            }
+          }
+        };
+
+        const previousResponse = {
+          data: [
+            {
+              type: "node--page",
+              id: "123"
+            }
+          ]
+        };
+
+        const resource =
+          createResource();
+
+        resource.previous =
+          vi.fn()
+            .mockResolvedValue(
+              previousResponse
+            );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        await expect(
+          nextResource.previous(
+            response
+          )
+        ).resolves.toBe(
+          previousResponse
+        );
+
+        expect(
+          resource.previous
+        ).toHaveBeenCalledWith(
+          response
+        );
+      }
+    );
+
+    it(
+      "delegates previous with a DrupalResourceResponse",
+      async () => {
+        const rawResponse = {
+          data: [],
+          links: {
+            prev: {
+              href:
+                "https://example.com/previous"
+            }
+          }
+        };
+
+        const previousResponse = {
+          data: [
+            {
+              type: "node--page",
+              id: "123"
+            }
+          ]
+        };
+
+        const resource =
+          createResource();
+
+        resource.previous =
+          vi.fn()
+            .mockResolvedValue(
+              previousResponse
+            );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        const response =
+          new DrupalResourceResponse(
+            rawResponse,
+            {} as never
+          );
+
+        await expect(
+          nextResource.previous(
+            response
+          )
+        ).resolves.toBe(
+          previousResponse
+        );
+
+        expect(
+          resource.previous
+        ).toHaveBeenCalledWith(
+          rawResponse
+        );
+      }
+    );
+
+    it(
+      "delegates relationshipData",
+      () => {
+        const relationship = {
+          data: {
+            type: "media--image",
+            id: "image-123"
+          }
+        };
+
+        const resource =
+          createResource();
+
+        resource.relationshipData =
+          vi.fn().mockReturnValue(
+            relationship.data
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.relationshipData(
+            relationship
+          )
+        ).toEqual(
+          relationship.data
+        );
+
+        expect(
+          resource.relationshipData
+        ).toHaveBeenCalledWith(
+          relationship
+        );
+      }
+    );
+
+    it(
+      "delegates relationshipData with a response",
+      () => {
+        const response = {
+          data: []
+        };
+
+        const relationship = {
+          data: {
+            type: "media--image",
+            id: "image-123"
+          }
+        };
+
+        const resource =
+          createResource();
+
+        resource.relationshipData =
+          vi.fn().mockReturnValue(
+            relationship.data
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.relationshipData(
+            response,
+            relationship
+          )
+        ).toEqual(
+          relationship.data
+        );
+
+        expect(
+          resource.relationshipData
+        ).toHaveBeenCalledWith(
+          response,
+          relationship
+        );
+      }
+    );
+
+    it(
+      "delegates getIncludedResource",
+      () => {
+        const response = {
+          data: [],
+          included: []
+        };
+
+        const relationship = {
+          data: {
+            type: "media--image",
+            id: "image-123"
+          }
+        };
+
+        const included = {
+          type: "media--image",
+          id: "image-123",
+          attributes: {
+            name: "Test Image"
+          }
+        };
+
+        const resource =
+          createResource();
+
+        resource.getIncludedResource =
+          vi.fn().mockReturnValue(
+            included
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.getIncludedResource(
+            response,
+            relationship
+          )
+        ).toBe(included);
+
+        expect(
+          resource.getIncludedResource
+        ).toHaveBeenCalledWith(
+          response,
+          relationship
+        );
+      }
+    );
+
+    it(
+      "delegates getIncludedResources",
+      () => {
+        const response = {
+          data: [],
+          included: []
+        };
+
+        const relationship = {
+          data: [
+            {
+              type: "media--image",
+              id: "image-123"
+            }
+          ]
+        };
+
+        const included = [
+          {
+            type: "media--image",
+            id: "image-123",
+            attributes: {
+              name: "Test Image"
+            }
+          }
+        ];
+
+        const resource =
+          createResource();
+
+        resource.getIncludedResources =
+          vi.fn().mockReturnValue(
+            included
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.getIncludedResources(
+            response,
+            relationship
+          )
+        ).toBe(included);
+
+        expect(
+          resource.getIncludedResources
+        ).toHaveBeenCalledWith(
+          response,
+          relationship
+        );
+      }
+    );
+
+    it(
+      "delegates includedResource",
+      () => {
+        const response = {
+          data: [],
+          included: []
+        };
+
+        const included = {
+          type: "media--image",
+          id: "image-123",
+          attributes: {
+            name: "Test Image"
+          }
+        };
+
+        const resource =
+          createResource();
+
+        resource.includedResource =
+          vi.fn().mockReturnValue(
+            included
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.includedResource(
+            response,
+            "field_image"
+          )
+        ).toBe(included);
+
+        expect(
+          resource.includedResource
+        ).toHaveBeenCalledWith(
+          response,
+          "field_image"
+        );
+      }
+    );
+
+    it(
+      "delegates includedResources",
+      () => {
+        const response = {
+          data: [],
+          included: []
+        };
+
+        const included = [
+          {
+            type: "media--image",
+            id: "image-123",
+            attributes: {
+              name: "Test Image"
+            }
+          }
+        ];
+
+        const resource =
+          createResource();
+
+        resource.includedResources =
+          vi.fn().mockReturnValue(
+            included
+          );
+
+        const nextResource =
+          new NextCMSResource(
+            resource
+          );
+
+        expect(
+          nextResource.includedResources(
+            response,
+            "field_images"
+          )
+        ).toBe(included);
+
+        expect(
+          resource.includedResources
+        ).toHaveBeenCalledWith(
+          response,
+          "field_images"
         );
       }
     );

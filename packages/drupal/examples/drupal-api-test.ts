@@ -1,7 +1,7 @@
 import { DrupalClient } from "../src/client/DrupalClient";
 
 const client = new DrupalClient({
-  baseUrl: process.env.DRUPAL_URL ?? "",
+  baseUrl: process.env.DRUPAL_BASE_URL ?? "",
   auth: {
     type: "api-key",
     key: process.env.DRUPAL_API_KEY ?? ""

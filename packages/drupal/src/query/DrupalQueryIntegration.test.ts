@@ -6,7 +6,7 @@ import { DrupalQuerySerializer } from "./DrupalQuerySerializer";
 
 loadEnvFile(".env.local");
 
-const drupalUrl = process.env.DRUPAL_URL;
+const drupalUrl = process.env.DRUPAL_BASE_URL;
 const httpAuthUsername =
   process.env.HTAUTH_U;
 const httpAuthPassword =
@@ -26,7 +26,7 @@ describe("Drupal JSON:API integration", () => {
       !apiKey
     ) {
       throw new Error(
-        "Missing DRUPAL_URL, HTAUTH_U, HTAUTH_P, CONSUMERUUID, or UP_API_KEY environment variables."
+        "Missing DRUPAL_BASE_URL, HTAUTH_U, HTAUTH_P, CONSUMERUUID, or UP_API_KEY environment variables."
       );
     }
 

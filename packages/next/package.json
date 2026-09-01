@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm clean && tsc"
+    "build": "pnpm clean && tsc",
+    "typecheck:types": "tsc -p tsconfig.type-tests.json --noEmit"
   },
   "dependencies": {
     "@cmsjumpstart/drupal": "workspace:*"
