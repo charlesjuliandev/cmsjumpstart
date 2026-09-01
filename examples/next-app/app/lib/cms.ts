@@ -2,37 +2,69 @@ import {
   createNextCMS
 } from "@cmsjumpstart/next";
 
+function getRequiredEnv(
+  name: string
+): string {
+  const value =
+    process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}`
+    );
+  }
+
+  return value;
+}
+
+const drupalBaseUrl =
+  getRequiredEnv(
+    "DRUPAL_BASE_URL"
+  );
+
+const htauthUsername =
+  getRequiredEnv(
+    "HTAUTH_U"
+  );
+
+const htauthPassword =
+  getRequiredEnv(
+    "HTAUTH_P"
+  );
+
+const consumerUuid =
+  getRequiredEnv(
+    "CONSUMERUUID"
+  );
+
+const apiKey =
+  getRequiredEnv(
+    "UP_API_KEY"
+  );
+
 export const cms =
   createNextCMS({
     drupal: {
       baseUrl:
-        process.env.DRUPAL_BASE_URL ??
-        "https://example.com",
+        drupalBaseUrl,
 
       auth: {
         type: "basic",
 
         username:
-          process.env.HTAUTH_U ?? "",
+          htauthUsername,
 
         password:
-          process.env.HTAUTH_P ?? ""
+          htauthPassword
       },
 
       headers: {
-        ...(process.env.CONSUMERUUID
-          ? {
-              "X-Consumer-ID":
-                process.env.CONSUMERUUID
-            }
-          : {}),
+        "X-Consumer-ID":
+          consumerUuid,
 
-        ...(process.env.UP_API_KEY
-          ? {
-              "api-key":
-                process.env.UP_API_KEY
-            }
-          : {})
+        "api-key":
+          apiKey
       }
     }
   });
+
