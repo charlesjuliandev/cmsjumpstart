@@ -1,21 +1,10 @@
 import {
-  cms
-} from "./lib/cms";
+  getPages
+} from "./lib/pages";
 
 export default async function HomePage() {
-  const response =
-    await cms
-      .resource("node--page")
-      .fields(
-        "title",
-        "body"
-      )
-      .sort("-created")
-      .limit(5)
-      .get();
-
   const pages =
-    response.getAll();
+    await getPages();
 
   return (
     <main>
