@@ -19,7 +19,7 @@ The project focuses on:
 
 ## Current Status
 
-🚧 Early development
+🚧 **Early development**
 
 The core Drupal and Next.js integration is actively being developed.
 
@@ -95,10 +95,8 @@ Configure the required Drupal environment variables:
 
 ```env
 DRUPAL_BASE_URL=https://your-drupal-site.example
-
 HTAUTH_U=your-username
 HTAUTH_P=your-password
-
 CONSUMERUUID=your-consumer-id
 UP_API_KEY=your-api-key
 ```
@@ -109,7 +107,23 @@ Start the development server:
 pnpm dev
 ```
 
-The example application will start using the Drupal JSON:API endpoint configured by the application.
+The example application will start on `http://localhost:3000` and use the Drupal JSON:API endpoint configured through your environment variables.
+
+## Environment Variables
+
+The Next.js example requires the following environment variables:
+
+| Variable          | Purpose                             |
+| ----------------- | ----------------------------------- |
+| `DRUPAL_BASE_URL` | Base URL of the Drupal installation |
+| `HTAUTH_U`        | HTTP Basic Authentication username  |
+| `HTAUTH_P`        | HTTP Basic Authentication password  |
+| `CONSUMERUUID`    | API gateway consumer identifier     |
+| `UP_API_KEY`      | API gateway key                     |
+
+Authentication values are supplied through environment variables and should not be committed to the repository.
+
+The example intentionally fails with a clear configuration error when required environment variables are missing rather than silently falling back to an invalid or placeholder Drupal URL.
 
 ## Drupal Requirements
 
@@ -138,7 +152,7 @@ and retrieves the five most recently created pages.
 
 Your Drupal installation must therefore expose the corresponding JSON:API resource and fields.
 
-## Authentication
+### Authentication
 
 The example supports the authentication headers required by the configured Drupal API gateway.
 
@@ -148,24 +162,7 @@ The current example uses:
 * `X-Consumer-ID`
 * `api-key`
 
-Authentication values are supplied through environment variables and are not committed to the repository.
-
-Required variables:
-
-```env
-HTAUTH_U=
-HTAUTH_P=
-CONSUMERUUID=
-UP_API_KEY=
-```
-
-The application also requires:
-
-```env
-DRUPAL_BASE_URL=
-```
-
-The example intentionally fails with a clear configuration error when required environment variables are missing rather than silently falling back to an invalid or placeholder Drupal URL.
+The Drupal integration also supports configurable authentication and custom headers for other API architectures.
 
 ## Development
 
@@ -181,7 +178,7 @@ Run the test suite:
 pnpm test
 ```
 
-Build the packages:
+Build all packages:
 
 ```bash
 pnpm build
@@ -205,6 +202,43 @@ Build the Next.js example for production:
 ```bash
 pnpm build
 ```
+
+Start the production build:
+
+```bash
+pnpm start
+```
+
+## Testing and Validation
+
+Before considering a change complete, validate the repository with:
+
+```bash
+pnpm test
+pnpm build
+```
+
+Then validate the Next.js example:
+
+```bash
+cd examples/next-app
+pnpm typecheck
+pnpm build
+```
+
+For changes affecting the example application, also run:
+
+```bash
+pnpm dev
+```
+
+and verify the application in a browser at:
+
+```text
+http://localhost:3000
+```
+
+The example should successfully load Drupal content when the required environment variables and Drupal API configuration are available.
 
 ## Architecture
 
@@ -241,6 +275,8 @@ Drupal JSON:API
 ```
 
 The Next.js integration remains intentionally thin. Drupal-specific behavior stays in the Drupal package rather than being duplicated inside the Next.js integration.
+
+The Next.js integration extends the Drupal request pipeline with Next.js-specific request behavior while continuing to use the Drupal package for CMS communication.
 
 ## Querying Drupal
 
@@ -315,6 +351,14 @@ The example includes:
 
 The example is intentionally small so that developers can use it as a starting point rather than having to remove application-specific boilerplate from a larger starter.
 
+## Styling
+
+The example uses Tailwind CSS for styling.
+
+The project uses Tailwind CSS v4 with the official PostCSS integration. No legacy `tailwind.config.js` file is required for the current example configuration.
+
+Custom styling and design tokens can be added through the application's CSS as the example evolves.
+
 ## Project Structure
 
 ```text
@@ -339,15 +383,38 @@ RFCs are used to document:
 * Public API design
 * Query behavior
 * Request execution
+* Authentication
 * Future features
 
 Because CMSJumpstart is still under active development, RFCs marked `Proposed` may describe future architecture rather than currently implemented functionality.
+
+## Current Limitations
+
+CMSJumpstart is still under active development.
+
+The following should be considered before using the project in production:
+
+* Public APIs may change before the first stable release.
+* The current example is focused on Drupal JSON:API.
+* The authentication example reflects the current Drupal API gateway requirements.
+* Advanced request features such as retries, middleware, and logging are not currently part of the request execution API.
+* The project currently provides a focused Next.js integration rather than a complete application framework.
+
+These limitations are expected to evolve as the project moves toward its first stable release.
 
 ## Contributing
 
 CMSJumpstart is currently in early development.
 
-Before contributing significant architectural changes, review the relevant RFCs and existing package implementations.
+Before contributing significant architectural changes:
+
+1. Review the relevant RFCs.
+2. Review the existing package implementation.
+3. Run the repository test suite.
+4. Run the package build.
+5. Typecheck and build the Next.js example when changes affect it.
+
+For larger architectural changes, document the proposed design in an RFC before implementation.
 
 ## License
 
