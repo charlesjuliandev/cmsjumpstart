@@ -13,19 +13,14 @@ import type {
 
 export interface RequestOptions {
   headers?: Record<string, string>;
-
   cache?: RequestCache;
 }
 
 export interface RequestExecutorOptions {
   baseUrl: string;
-
   headers?: Record<string, string>;
-
   auth?: AuthProvider;
-
   timeout?: number;
-
   request?: RequestOptions;
 }
 
@@ -37,7 +32,7 @@ export class RequestExecutor {
 
   private readonly timeout: number;
 
-  private readonly request:
+  protected readonly request:
     RequestOptions;
 
   constructor(
@@ -65,7 +60,8 @@ export class RequestExecutor {
       options.request ?? {};
   }
 
-  getHeaders(): Record<string, string> {
+  getHeaders():
+    Record<string, string> {
     return {
       ...this.headers
     };
@@ -157,7 +153,8 @@ export class RequestExecutor {
   protected createRequestInit(
     signal: AbortSignal
   ): RequestInit {
-    const requestInit: RequestInit = {
+    const requestInit:
+      RequestInit = {
       method: "GET",
 
       headers: {
@@ -285,7 +282,6 @@ export class RequestExecutor {
     >(href);
   }
 
-  
   private async createResponseError(
     response: Response,
     url: URL
@@ -322,8 +318,6 @@ export class RequestExecutor {
       `${message} (${url})`
     );
   }
-
-
 
   private buildUrl(
     path: string,

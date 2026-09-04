@@ -13,25 +13,29 @@ describe(
   "NextRequestExecutor",
   () => {
     it(
-      "executes a request using the base Drupal request behavior",
+      "executes a base Drupal request",
       async () => {
         const fetchMock =
           vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200,
 
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
+                  headers: {
+                    "content-type":
+                      "application/vnd.api+json"
+                  }
+                }
+              )
+            );
 
         const executor =
           new NextRequestExecutor({
@@ -43,50 +47,58 @@ describe(
           "/jsonapi/node/page"
         );
 
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            new URL(
-              "https://example.com/jsonapi/node/page"
-            ),
-            expect.objectContaining({
-              method: "GET",
+        expect(
+          fetchMock
+        ).toHaveBeenCalledTimes(
+          1
+        );
 
-              headers: {
-                Accept:
-                  "application/vnd.api+json"
-              },
+        const [
+          url,
+          init
+        ] =
+          fetchMock.mock.calls[0];
 
-              signal:
-                expect.any(
-                  AbortSignal
-                )
-            })
-          );
+        expect(url).toEqual(
+          new URL(
+            "https://example.com/jsonapi/node/page"
+          )
+        );
 
-        vi.unstubAllGlobals();
+        expect(
+          init?.method
+        ).toBe("GET");
+
+        expect(
+          init?.headers
+        ).toEqual({
+          Accept:
+            "application/vnd.api+json"
+        });
+
+        fetchMock.mockRestore();
       }
     );
 
     it(
-      "passes the Drupal cache option to fetch",
+      "supports Drupal cache options",
       async () => {
         const fetchMock =
           vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
 
         const executor =
           new NextRequestExecutor({
@@ -95,7 +107,7 @@ describe(
 
             request: {
               cache:
-                "force-cache"
+                "no-store"
             }
           });
 
@@ -103,39 +115,39 @@ describe(
           "/jsonapi/node/page"
         );
 
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            expect.any(URL),
-            expect.objectContaining({
-              cache:
-                "force-cache"
-            })
-          );
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
 
-        vi.unstubAllGlobals();
+        expect(
+          init?.cache
+        ).toBe("no-store");
+
+        fetchMock.mockRestore();
       }
     );
 
     it(
-      "passes Next.js revalidation options to fetch",
+      "supports Next.js revalidation",
       async () => {
         const fetchMock =
           vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
 
         const executor =
           new NextRequestExecutor({
@@ -152,41 +164,39 @@ describe(
           "/jsonapi/node/page"
         );
 
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            expect.any(URL),
-            expect.objectContaining({
-              next: {
-                revalidate:
-                  3600
-              }
-            })
-          );
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
 
-        vi.unstubAllGlobals();
+        expect(
+          init?.next?.revalidate
+        ).toBe(3600);
+
+        fetchMock.mockRestore();
       }
     );
 
     it(
-      "passes Next.js cache tags to fetch",
+      "supports Next.js cache tags",
       async () => {
         const fetchMock =
           vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
 
         const executor =
           new NextRequestExecutor({
@@ -195,8 +205,7 @@ describe(
 
             request: {
               tags: [
-                "events",
-                "homepage"
+                "custom-tag"
               ]
             }
           });
@@ -205,43 +214,41 @@ describe(
           "/jsonapi/node/page"
         );
 
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            expect.any(URL),
-            expect.objectContaining({
-              next: {
-                tags: [
-                  "events",
-                  "homepage"
-                ]
-              }
-            })
-          );
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
 
-        vi.unstubAllGlobals();
+        expect(
+          init?.next?.tags
+        ).toEqual([
+          "custom-tag"
+        ]);
+
+        fetchMock.mockRestore();
       }
     );
 
     it(
-      "passes revalidation and cache tags together",
+      "supports revalidation and cache tags together",
       async () => {
         const fetchMock =
           vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
 
         const executor =
           new NextRequestExecutor({
@@ -249,73 +256,11 @@ describe(
               "https://example.com",
 
             request: {
-              revalidate:
-                1800,
-
-              tags: [
-                "events"
-              ]
-            }
-          });
-
-        await executor.get(
-          "/jsonapi/node/page"
-        );
-
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            expect.any(URL),
-            expect.objectContaining({
-              next: {
-                revalidate:
-                  1800,
-
-                tags: [
-                  "events"
-                ]
-              }
-            })
-          );
-
-        vi.unstubAllGlobals();
-      }
-    );
-
-    it(
-      "passes Drupal cache and Next.js options together",
-      async () => {
-        const fetchMock =
-          vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
-
-        const executor =
-          new NextRequestExecutor({
-            baseUrl:
-              "https://example.com",
-
-            request: {
-              cache:
-                "force-cache",
-
               revalidate:
                 3600,
 
               tags: [
-                "events"
+                "custom-tag"
               ]
             }
           });
@@ -324,25 +269,23 @@ describe(
           "/jsonapi/node/page"
         );
 
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            expect.any(URL),
-            expect.objectContaining({
-              cache:
-                "force-cache",
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
 
-              next: {
-                revalidate:
-                  3600,
+        expect(
+          init?.next?.revalidate
+        ).toBe(3600);
 
-                tags: [
-                  "events"
-                ]
-              }
-            })
-          );
+        expect(
+          init?.next?.tags
+        ).toEqual([
+          "custom-tag"
+        ]);
 
-        vi.unstubAllGlobals();
+        fetchMock.mockRestore();
       }
     );
 
@@ -351,21 +294,20 @@ describe(
       async () => {
         const fetchMock =
           vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-
-              json:
-                vi.fn()
-                  .mockResolvedValue({
-                    data: []
-                  })
-            });
-
-        vi.stubGlobal(
-          "fetch",
-          fetchMock
-        );
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
 
         const executor =
           new NextRequestExecutor({
@@ -373,16 +315,14 @@ describe(
               "https://example.com",
 
             headers: {
+              Authorization:
+                "Basic test",
+
               "X-Consumer-ID":
-                "cmsjumpstart-test",
+                "consumer",
 
               "api-key":
-                "test-key"
-            },
-
-            request: {
-              revalidate:
-                3600
+                "key"
             }
           });
 
@@ -390,29 +330,341 @@ describe(
           "/jsonapi/node/page"
         );
 
-        expect(fetchMock)
-          .toHaveBeenCalledWith(
-            expect.any(URL),
-            expect.objectContaining({
-              headers: {
-                Accept:
-                  "application/vnd.api+json",
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
 
-                "X-Consumer-ID":
-                  "cmsjumpstart-test",
+        expect(
+          init?.headers
+        ).toMatchObject({
+          Authorization:
+            "Basic test",
 
-                "api-key":
-                  "test-key"
-              },
+          "X-Consumer-ID":
+            "consumer",
 
-              next: {
-                revalidate:
-                  3600
-              }
-            })
-          );
+          "api-key":
+            "key"
+        });
 
-        vi.unstubAllGlobals();
+        fetchMock.mockRestore();
+      }
+    );
+
+    it(
+      "adds the resource collection cache tag",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com",
+
+            resourceType:
+              "node--page"
+          });
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          init?.next?.tags
+        ).toEqual([
+          "cmsjumpstart:drupal:node--page"
+        ]);
+
+        fetchMock.mockRestore();
+      }
+    );
+
+    it(
+      "merges resource and application cache tags",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com",
+
+            resourceType:
+              "node--page",
+
+            request: {
+              tags: [
+                "custom-tag"
+              ]
+            }
+          });
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          init?.next?.tags
+        ).toEqual([
+          "cmsjumpstart:drupal:node--page",
+          "custom-tag"
+        ]);
+
+        fetchMock.mockRestore();
+      }
+    );
+
+    it(
+      "removes duplicate cache tags",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com",
+
+            resourceType:
+              "node--page",
+
+            request: {
+              tags: [
+                "cmsjumpstart:drupal:node--page",
+                "custom-tag",
+                "custom-tag"
+              ]
+            }
+          });
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          init?.next?.tags
+        ).toEqual([
+          "cmsjumpstart:drupal:node--page",
+          "custom-tag"
+        ]);
+
+        fetchMock.mockRestore();
+      }
+    );
+
+    it(
+      "does not add a resource tag without a resource type",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com"
+          });
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          init?.next?.tags
+        ).toBeUndefined();
+
+        fetchMock.mockRestore();
+      }
+    );
+
+    it(
+      "enables force-cache for the underlying request",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com"
+          });
+
+        executor.enableCache();
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          init?.cache
+        ).toBe(
+          "force-cache"
+        );
+
+        fetchMock.mockRestore();
+      }
+    );
+
+    it(
+      "enables force-cache when request options already exist",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  data: []
+                }),
+                {
+                  status: 200
+                }
+              )
+            );
+
+        const executor =
+          new NextRequestExecutor({
+            baseUrl:
+              "https://example.com",
+
+            request: {
+              tags: [
+                "custom-tag"
+              ]
+            }
+          });
+
+        executor.enableCache();
+
+        await executor.get(
+          "/jsonapi/node/page"
+        );
+
+        const [
+          ,
+          init
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          init?.cache
+        ).toBe(
+          "force-cache"
+        );
+
+        expect(
+          init?.next?.tags
+        ).toEqual([
+          "custom-tag"
+        ]);
+
+        fetchMock.mockRestore();
       }
     );
   }

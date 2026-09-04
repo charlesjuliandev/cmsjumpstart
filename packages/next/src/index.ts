@@ -17,3 +17,8 @@ export type {
 export type {
   NextRequestOptions
 } from "./executor/NextRequestExecutor";
+
+export {
+  revalidateResource
+} from "./revalidation/revalidateResource";
+

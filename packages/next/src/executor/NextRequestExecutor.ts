@@ -7,23 +7,21 @@ import type {
   RequestOptions
 } from "@cmsjumpstart/drupal";
 
+import {
+  getResourceCacheTags
+} from "../cache/cacheTags";
+
 interface NextFetchRequestInit
   extends RequestInit {
   next?: {
-    revalidate?:
-      | number
-      | false;
-
+    revalidate?: number | false;
     tags?: string[];
   };
 }
 
 export interface NextRequestOptions
   extends RequestOptions {
-  revalidate?:
-    | number
-    | false;
-
+  revalidate?: number | false;
   tags?: string[];
 }
 
@@ -33,6 +31,7 @@ export interface NextRequestExecutorOptions
     "request"
   > {
   request?: NextRequestOptions;
+  resourceType?: string;
 }
 
 export class NextRequestExecutor
@@ -40,23 +39,44 @@ export class NextRequestExecutor
   private readonly nextRequest:
     NextRequestOptions;
 
+  private readonly resourceType?:
+    string;
+
   constructor(
-    options: NextRequestExecutorOptions
+    options:
+      NextRequestExecutorOptions
   ) {
-    if (
-      options.request !== undefined
-    ) {
-      super({
-        ...options,
-        request:
-          options.request
-      });
-    } else {
-      super(options);
-    }
+    const request =
+      options.request ?? {};
+
+    super({
+      ...options,
+      request
+    });
 
     this.nextRequest =
-      options.request ?? {};
+      request;
+
+    if (
+      options.resourceType !==
+      undefined
+    ) {
+      this.resourceType =
+        options.resourceType;
+    }
+  }
+
+  /**
+   * Enables Next.js-compatible
+   * HTTP caching for requests made
+   * by this executor.
+   */
+  enableCache(): void {
+    this.request.cache =
+      "force-cache";
+
+    this.nextRequest.cache =
+      "force-cache";
   }
 
   protected override createRequestInit(
@@ -67,9 +87,10 @@ export class NextRequestExecutor
         signal
       ) as NextFetchRequestInit;
 
-    const next: NonNullable<
-      NextFetchRequestInit["next"]
-    > = {};
+    const next:
+      NonNullable<
+        NextFetchRequestInit["next"]
+      > = {};
 
     if (
       this.nextRequest.revalidate !==
@@ -79,18 +100,33 @@ export class NextRequestExecutor
         this.nextRequest.revalidate;
     }
 
-    if (
-      this.nextRequest.tags !==
+    const applicationTags =
+      this.nextRequest.tags ?? [];
+
+    const resourceTags =
+      this.resourceType !==
       undefined
-    ) {
-      next.tags =
-        this.nextRequest.tags;
+        ? getResourceCacheTags(
+            this.resourceType
+          )
+        : [];
+
+    const tags = [
+      ...resourceTags,
+      ...applicationTags
+    ];
+
+    if (tags.length > 0) {
+      next.tags = [
+        ...new Set(tags)
+      ];
     }
 
     if (
       Object.keys(next).length > 0
     ) {
-      requestInit.next = next;
+      requestInit.next =
+        next;
     }
 
     return requestInit;
