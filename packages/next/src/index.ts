@@ -23,6 +23,14 @@ export {
 } from "./revalidation/revalidateResource";
 
 export {
+  createRevalidationHandler
+} from "./revalidation/createRevalidationHandler";
+
+export type {
+  RevalidationHandlerOptions
+} from "./revalidation/createRevalidationHandler";
+
+export {
   createPreviewHandler
 } from "./preview/createPreviewHandler";
 
