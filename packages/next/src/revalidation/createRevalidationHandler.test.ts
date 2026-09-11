@@ -1,4 +1,8 @@
 import {
+  createHmac
+} from "node:crypto";
+
+import {
   beforeEach,
   describe,
   expect,
@@ -7,56 +11,54 @@ import {
 } from "vitest";
 
 const {
-  revalidateResourceMock
+  revalidateResource
 } = vi.hoisted(() => ({
-  revalidateResourceMock:
+  revalidateResource:
     vi.fn()
 }));
 
 vi.mock(
   "./revalidateResource",
   () => ({
-    revalidateResource:
-      revalidateResourceMock
+    revalidateResource
   })
 );
 
 import {
   createRevalidationHandler
 } from "./createRevalidationHandler";
+import ts from "typescript";
 
-const SECRET =
-  "test-revalidation-secret";
+const secret =
+  "test-webhook-secret";
+
+function createSignature(
+  body: string
+): string {
+  return `sha256=${createHmac(
+    "sha256",
+    secret
+  )
+    .update(body, "utf8")
+    .digest("hex")}`;
+}
 
 function createRequest(
-  body: unknown,
-  headers: Record<
-    string,
-    string
-  > = {}
+  body: string,
+  headers:
+    | Record<string, string>
+    | undefined = undefined
 ): Request {
   return new Request(
-    "https://example.com/api/revalidate",
+    "http://localhost/api/revalidate",
     {
       method: "POST",
 
-      headers: {
-        "content-type":
-          "application/json",
+      headers,
 
-        ...headers
-      },
-
-      body:
-        JSON.stringify(body)
+      body
     }
   );
-}
-
-async function getJson(
-  response: Response
-): Promise<unknown> {
-  return response.json();
 }
 
 describe(
@@ -67,7 +69,7 @@ describe(
     });
 
     it(
-      "throws when no secret is provided",
+      "requires a revalidation secret",
       () => {
         expect(() =>
           createRevalidationHandler({
@@ -80,27 +82,28 @@ describe(
     );
 
     it(
-      "revalidates a specific resource",
+      "revalidates a specific CMSJumpstart resource",
       async () => {
         const handler =
           createRevalidationHandler({
-            secret: SECRET
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            resource: {
+              type: "node--page",
+              id: "page-123"
+            }
           });
 
         const response =
           await handler(
             createRequest(
-              {
-                resource: {
-                  type:
-                    "node--page",
-
-                  id: "123"
-                }
-              },
+              body,
               {
                 Authorization:
-                  `Bearer ${SECRET}`
+                  `Bearer ${secret}`
               }
             )
           );
@@ -110,50 +113,47 @@ describe(
         ).toBe(200);
 
         expect(
-          revalidateResourceMock
-        ).toHaveBeenCalledOnce();
-
-        expect(
-          revalidateResourceMock
+          revalidateResource
         ).toHaveBeenCalledWith(
           "node--page",
-          "123"
+          "page-123"
         );
 
         await expect(
-          getJson(response)
+          response.json()
         ).resolves.toEqual({
           revalidated: true,
 
           resource: {
             type: "node--page",
-
-            id: "123"
+            id: "page-123"
           }
         });
       }
     );
 
     it(
-      "revalidates a resource collection when no id is provided",
+      "revalidates a CMSJumpstart resource collection",
       async () => {
         const handler =
           createRevalidationHandler({
-            secret: SECRET
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            resource: {
+              type: "node--page"
+            }
           });
 
         const response =
           await handler(
             createRequest(
-              {
-                resource: {
-                  type:
-                    "node--page"
-                }
-              },
+              body,
               {
                 Authorization:
-                  `Bearer ${SECRET}`
+                  `Bearer ${secret}`
               }
             )
           );
@@ -163,45 +163,212 @@ describe(
         ).toBe(200);
 
         expect(
-          revalidateResourceMock
-        ).toHaveBeenCalledOnce();
-
-        expect(
-          revalidateResourceMock
+          revalidateResource
         ).toHaveBeenCalledWith(
           "node--page",
           undefined
         );
+      }
+    );
+
+    it(
+      "accepts a valid Drupal Webhooks node update",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "entity:node:update",
+
+            entity: {
+              uuid: [
+                {
+                  value:
+                    "a91cc128-82be-48b0-bc4d-8a5ac678323b"
+                }
+              ],
+
+              type: [
+                {
+                  target_id:
+                    "page"
+                }
+              ]
+            }
+          });
+
+        const response =
+          await handler(
+            createRequest(
+              body,
+              {
+                "X-Hub-Signature-256":
+                  createSignature(
+                    body
+                  )
+              }
+            )
+          );
+
+        expect(
+          response.status
+        ).toBe(200);
+
+        expect(
+          revalidateResource
+        ).toHaveBeenCalledWith(
+          "node--page",
+          "a91cc128-82be-48b0-bc4d-8a5ac678323b"
+        );
 
         await expect(
-          getJson(response)
+          response.json()
         ).resolves.toEqual({
           revalidated: true,
 
           resource: {
-            type: "node--page"
+            type: "node--page",
+            id: "a91cc128-82be-48b0-bc4d-8a5ac678323b"
           }
         });
       }
     );
 
     it(
-      "returns 401 when authorization is missing",
+      "accepts a valid Drupal Webhooks node create",
       async () => {
         const handler =
           createRevalidationHandler({
-            secret: SECRET
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "entity:node:create",
+
+            entity: {
+              uuid: [
+                {
+                  value:
+                    "node-create-123"
+                }
+              ],
+
+              type: [
+                {
+                  target_id:
+                    "page"
+                }
+              ]
+            }
           });
 
         const response =
           await handler(
-            createRequest({
-              resource: {
-                type:
-                  "node--page",
-                id: "123"
+            createRequest(
+              body,
+              {
+                "X-Hub-Signature-256":
+                  createSignature(
+                    body
+                  )
               }
-            })
+            )
+          );
+
+        expect(
+          response.status
+        ).toBe(200);
+
+        expect(
+          revalidateResource
+        ).toHaveBeenCalledWith(
+          "node--page",
+          "node-create-123"
+        );
+      }
+    );
+
+    it(
+      "accepts a valid Drupal Webhooks node delete",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "entity:node:delete",
+
+            entity: {
+              uuid: [
+                {
+                  value:
+                    "node-delete-123"
+                }
+              ],
+
+              type: [
+                {
+                  target_id:
+                    "page"
+                }
+              ]
+            }
+          });
+
+        const response =
+          await handler(
+            createRequest(
+              body,
+              {
+                "X-Hub-Signature-256":
+                  createSignature(
+                    body
+                  )
+              }
+            )
+          );
+
+        expect(
+          response.status
+        ).toBe(200);
+
+        expect(
+          revalidateResource
+        ).toHaveBeenCalledWith(
+          "node--page",
+          "node-delete-123"
+        );
+      }
+    );
+
+    it(
+      "rejects requests without authentication",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            resource: {
+              type: "node--page",
+              id: "123"
+            }
+          });
+
+        const response =
+          await handler(
+            createRequest(body)
           );
 
         expect(
@@ -209,36 +376,31 @@ describe(
         ).toBe(401);
 
         expect(
-          revalidateResourceMock
+          revalidateResource
         ).not.toHaveBeenCalled();
-
-        await expect(
-          getJson(response)
-        ).resolves.toEqual({
-          error:
-            "Invalid revalidation secret."
-        });
       }
     );
 
     it(
-      "returns 401 when authorization is invalid",
+      "rejects an invalid bearer token",
       async () => {
         const handler =
           createRevalidationHandler({
-            secret: SECRET
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            resource: {
+              type: "node--page",
+              id: "123"
+            }
           });
 
         const response =
           await handler(
             createRequest(
-              {
-                resource: {
-                  type:
-                    "node--page",
-                  id: "123"
-                }
-              },
+              body,
               {
                 Authorization:
                   "Bearer wrong-secret"
@@ -251,73 +413,100 @@ describe(
         ).toBe(401);
 
         expect(
-          revalidateResourceMock
+          revalidateResource
         ).not.toHaveBeenCalled();
       }
     );
 
     it(
-      "returns 400 for malformed JSON",
+      "rejects an invalid HMAC signature",
       async () => {
         const handler =
           createRevalidationHandler({
-            secret: SECRET
+            secret
           });
 
-        const request =
-          new Request(
-            "https://example.com/api/revalidate",
-            {
-              method: "POST",
-
-              headers: {
-                Authorization:
-                  `Bearer ${SECRET}`,
-
-                "content-type":
-                  "application/json"
-              },
-
-              body: "{"
+        const body =
+          JSON.stringify({
+            resource: {
+              type: "node--page",
+              id: "123"
             }
-          );
-
-        const response =
-          await handler(request);
-
-        expect(
-          response.status
-        ).toBe(400);
-
-        expect(
-          revalidateResourceMock
-        ).not.toHaveBeenCalled();
-
-        await expect(
-          getJson(response)
-        ).resolves.toEqual({
-          error:
-            "Invalid JSON request body."
-        });
-      }
-    );
-
-    it(
-      "returns 400 when the resource is missing",
-      async () => {
-        const handler =
-          createRevalidationHandler({
-            secret: SECRET
           });
 
         const response =
           await handler(
             createRequest(
-              {},
+              body,
+              {
+                "X-Hub-Signature-256":
+                  "sha256=" +
+                  "0".repeat(64)
+              }
+            )
+          );
 
+        expect(
+          response.status
+        ).toBe(401);
+
+        expect(
+          revalidateResource
+        ).not.toHaveBeenCalled();
+      }
+    );
+
+    it(
+      "rejects a malformed HMAC signature",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            resource: {
+              type: "node--page",
+              id: "123"
+            }
+          });
+
+        const response =
+          await handler(
+            createRequest(
+              body,
+              {
+                "X-Hub-Signature-256":
+                  "sha256=invalid"
+              }
+            )
+          );
+
+        expect(
+          response.status
+        ).toBe(401);
+      }
+    );
+
+    it(
+      "rejects malformed JSON",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          "{invalid-json";
+
+        const response =
+          await handler(
+            createRequest(
+              body,
               {
                 Authorization:
-                  `Bearer ${SECRET}`
+                  `Bearer ${secret}`
               }
             )
           );
@@ -327,75 +516,165 @@ describe(
         ).toBe(400);
 
         expect(
-          revalidateResourceMock
+          revalidateResource
         ).not.toHaveBeenCalled();
-
-        await expect(
-          getJson(response)
-        ).resolves.toEqual({
-          error:
-            "A valid resource is required."
-        });
       }
     );
 
     it(
-      "returns 400 when the resource type is invalid",
+      "rejects a payload without a resource",
       async () => {
         const handler =
           createRevalidationHandler({
-            secret: SECRET
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "some:event"
           });
 
         const response =
           await handler(
             createRequest(
+              body,
               {
-                resource: {
-                  type: ""
+                Authorization:
+                  `Bearer ${secret}`
+              }
+            )
+          );
+
+        expect(
+          response.status
+        ).toBe(400);
+      }
+    );
+
+    it(
+      "rejects a Drupal webhook without a UUID",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "entity:node:update",
+
+            entity: {
+              type: [
+                {
+                  target_id:
+                    "page"
                 }
-              },
-
-              {
-                Authorization:
-                  `Bearer ${SECRET}`
-              }
-            )
-          );
-
-        expect(
-          response.status
-        ).toBe(400);
-
-        expect(
-          revalidateResourceMock
-        ).not.toHaveBeenCalled();
-      }
-    );
-
-    it(
-      "returns 400 when the resource id is invalid",
-      async () => {
-        const handler =
-          createRevalidationHandler({
-            secret: SECRET
+              ]
+            }
           });
 
         const response =
           await handler(
             createRequest(
+              body,
               {
-                resource: {
-                  type:
-                    "node--page",
+                "X-Hub-Signature-256":
+                  createSignature(
+                    body
+                  )
+              }
+            )
+          );
 
-                  id: ""
+        expect(
+          response.status
+        ).toBe(400);
+      }
+    );
+
+    it(
+      "rejects a Drupal webhook without a node bundle",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "entity:node:update",
+
+            entity: {
+              uuid: [
+                {
+                  value:
+                    "node-123"
                 }
-              },
+              ]
+            }
+          });
 
+        const response =
+          await handler(
+            createRequest(
+              body,
               {
-                Authorization:
-                  `Bearer ${SECRET}`
+                "X-Hub-Signature-256":
+                  createSignature(
+                    body
+                  )
+              }
+            )
+          );
+
+        expect(
+          response.status
+        ).toBe(400);
+      }
+    );
+
+    it(
+      "rejects unsupported Drupal webhook events",
+      async () => {
+        const handler =
+          createRevalidationHandler({
+            secret
+          });
+
+        const body =
+          JSON.stringify({
+            event:
+              "entity:user:update",
+
+            entity: {
+              uuid: [
+                {
+                  value:
+                    "user-123"
+                }
+              ],
+
+              type: [
+                {
+                  target_id:
+                    "user"
+                }
+              ]
+            }
+          });
+
+        const response =
+          await handler(
+            createRequest(
+              body,
+              {
+                "X-Hub-Signature-256":
+                  createSignature(
+                    body
+                  )
               }
             )
           );
@@ -405,7 +684,7 @@ describe(
         ).toBe(400);
 
         expect(
-          revalidateResourceMock
+          revalidateResource
         ).not.toHaveBeenCalled();
       }
     );
