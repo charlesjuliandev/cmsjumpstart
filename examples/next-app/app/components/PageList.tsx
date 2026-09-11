@@ -4,6 +4,8 @@ import {
   useRouter
 } from "next/navigation";
 
+import Link from "next/link";
+
 import {
   Button
 } from "react-aria-components";
@@ -42,7 +44,9 @@ export function PageList({
         </div>
 
         <Button
-          onPress={() => router.refresh()}
+          onPress={() =>
+            router.refresh()
+          }
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white outline-none transition hover:bg-blue-700 data-[focus-visible]:ring-2 data-[focus-visible]:ring-blue-600 data-[focus-visible]:ring-offset-2 data-[pressed]:bg-blue-800 motion-reduce:transition-none"
         >
           Refresh
@@ -64,7 +68,12 @@ export function PageList({
             >
               <article>
                 <h3 className="text-xl font-semibold text-slate-900">
-                  {page.title}
+                  <Link
+                    href={`/pages/${page.id}`}
+                    className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                  >
+                    {page.title}
+                  </Link>
                 </h3>
 
                 {page.summary ? (
@@ -93,3 +102,4 @@ export function PageList({
     </section>
   );
 }
+

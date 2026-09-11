@@ -8,7 +8,8 @@ import {
 
 import type {
   DrupalFilterOperator,
-  DrupalFilterValue
+  DrupalFilterValue,
+  DrupalResourceVersion
 } from "../query/types";
 
 import {
@@ -48,6 +49,8 @@ export class DrupalResource<
 > {
   private query: DrupalQueryBuilder;
 
+  private resourceId?: string;
+
   constructor(
     private readonly resourceType: string,
     private readonly executor?: RequestExecutor
@@ -56,6 +59,29 @@ export class DrupalResource<
       DrupalQueryBuilder.create(
         resourceType
       );
+  }
+
+  /**
+   * Targets an individual resource
+   * by JSON:API resource ID.
+   *
+   * Example:
+   *
+   * .id("f457344f-7035-4d5c-b03d-3d9f5586908e")
+   */
+  id(
+    resourceId: string
+  ): this {
+    if (!resourceId) {
+      throw new Error(
+        "Resource ID cannot be empty."
+      );
+    }
+
+    this.resourceId =
+      resourceId;
+
+    return this;
   }
 
   include(
@@ -185,6 +211,17 @@ export class DrupalResource<
     return this;
   }
 
+  resourceVersion(
+    version: DrupalResourceVersion
+  ): this {
+    this.query =
+      this.query.resourceVersion(
+        version
+      );
+
+    return this;
+  }
+
   getQuery(): DrupalQueryBuilder {
     return this.query;
   }
@@ -208,13 +245,24 @@ export class DrupalResource<
         this.query
       );
 
+    const endpoint =
+      this.getEndpoint();
+
+    const resourceEndpoint =
+      this.resourceId !==
+      undefined
+        ? `${endpoint}/${encodeURIComponent(
+            this.resourceId
+          )}`
+        : endpoint;
+
     const response =
       await this.executor.get<
         TAttributes,
         TRelationships,
         TIncludedAttributes
       >(
-        `/jsonapi/${this.getEndpoint()}`,
+        `/jsonapi/${resourceEndpoint}`,
         params
       );
 
@@ -595,3 +643,4 @@ export class DrupalResource<
     );
   }
 }
+

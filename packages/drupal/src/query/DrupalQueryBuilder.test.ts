@@ -411,4 +411,84 @@ describe("DrupalQueryBuilder", () => {
       'Filter "NOT BETWEEN" requires exactly two values.'
     );
   });
+  it("supports resource versions", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion(
+          "rel:working-copy"
+        );
+
+    expect(
+      query.getOptions()
+    ).toEqual({
+      resourceVersion:
+        "rel:working-copy"
+    });
+  });
+
+  it("supports the latest-version relationship", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion(
+          "rel:latest-version"
+        );
+
+    expect(
+      query.getOptions()
+    ).toEqual({
+      resourceVersion:
+        "rel:latest-version"
+    });
+  });
+
+  it("supports specific revision IDs", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion(
+          "id:123"
+        );
+
+    expect(
+      query.getOptions()
+    ).toEqual({
+      resourceVersion:
+        "id:123"
+    });
+  });
+
+  it("keeps resource version queries immutable", () => {
+    const base =
+      DrupalQueryBuilder.create(
+        "node--page"
+      );
+
+    const preview =
+      base.resourceVersion(
+        "rel:working-copy"
+      );
+
+    expect(
+      base.getOptions()
+    ).toEqual({});
+
+    expect(
+      preview.getOptions()
+    ).toEqual({
+      resourceVersion:
+        "rel:working-copy"
+    });
+  });
+
+  it("rejects an empty revision ID", () => {
+    expect(() =>
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion("id:")
+    ).toThrow(
+      'Invalid Drupal resource version "id:".'
+    );
+  });
 });

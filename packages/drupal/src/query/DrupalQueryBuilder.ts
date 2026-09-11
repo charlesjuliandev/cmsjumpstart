@@ -1,7 +1,8 @@
 import type {
   DrupalFilterOperator,
   DrupalFilterValue,
-  DrupalQueryOptions
+  DrupalQueryOptions,
+  DrupalResourceVersion
 } from "./types";
 
 export class DrupalQueryBuilder {
@@ -42,6 +43,40 @@ export class DrupalQueryBuilder {
       {
         ...this.options,
         fields
+      }
+    );
+  }
+
+  /**
+   * Sets the Drupal JSON:API resource
+   * version requested by the query.
+   *
+   * Examples:
+   *
+   * resourceVersion(
+   *   "rel:working-copy"
+   * )
+   *
+   * resourceVersion(
+   *   "rel:latest-version"
+   * )
+   *
+   * resourceVersion(
+   *   "id:123"
+   * )
+   */
+  resourceVersion(
+    version: DrupalResourceVersion
+  ): DrupalQueryBuilder {
+    this.validateResourceVersion(
+      version
+    );
+
+    return new DrupalQueryBuilder(
+      this.resourceType,
+      {
+        ...this.options,
+        resourceVersion: version
       }
     );
   }
@@ -296,6 +331,28 @@ export class DrupalQueryBuilder {
     }
   }
 
+  private validateResourceVersion(
+    version: DrupalResourceVersion
+  ): void {
+    if (
+      version === "rel:working-copy" ||
+      version === "rel:latest-version"
+    ) {
+      return;
+    }
+
+    if (
+      version.startsWith("id:") &&
+      version.length > 3
+    ) {
+      return;
+    }
+
+    throw new Error(
+      `Invalid Drupal resource version "${version}".`
+    );
+  }
+
   private isFilterOperator(
     value: string
   ): value is DrupalFilterOperator {
@@ -320,3 +377,4 @@ export class DrupalQueryBuilder {
     );
   }
 }
+

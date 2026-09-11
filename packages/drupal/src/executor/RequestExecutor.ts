@@ -13,14 +13,19 @@ import type {
 
 export interface RequestOptions {
   headers?: Record<string, string>;
+
   cache?: RequestCache;
 }
 
 export interface RequestExecutorOptions {
   baseUrl: string;
+
   headers?: Record<string, string>;
+
   auth?: AuthProvider;
+
   timeout?: number;
+
   request?: RequestOptions;
 }
 
@@ -284,6 +289,7 @@ export class RequestExecutor {
 
   private async createResponseError(
     response: Response,
+
     url: URL
   ): Promise<Error> {
     let message =
@@ -321,6 +327,7 @@ export class RequestExecutor {
 
   private buildUrl(
     path: string,
+
     params?: URLSearchParams
   ): URL {
     const url =

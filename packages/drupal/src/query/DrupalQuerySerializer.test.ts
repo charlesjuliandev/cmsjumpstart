@@ -521,4 +521,69 @@ describe("DrupalQuerySerializer", () => {
       "2026-08-31"
     );
   });
+  it("serializes a working-copy resource version", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion(
+          "rel:working-copy"
+        );
+
+    const params =
+      DrupalQuerySerializer.serialize(
+        query
+      );
+
+    expect(
+      params.get(
+        "resourceVersion"
+      )
+    ).toBe(
+      "rel:working-copy"
+    );
+  });
+
+  it("serializes a latest-version resource version", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion(
+          "rel:latest-version"
+        );
+
+    const params =
+      DrupalQuerySerializer.serialize(
+        query
+      );
+
+    expect(
+      params.get(
+        "resourceVersion"
+      )
+    ).toBe(
+      "rel:latest-version"
+    );
+  });
+
+  it("serializes a specific revision ID", () => {
+    const query =
+      DrupalQueryBuilder
+        .create("node--page")
+        .resourceVersion(
+          "id:123"
+        );
+
+    const params =
+      DrupalQuerySerializer.serialize(
+        query
+      );
+
+    expect(
+      params.get(
+        "resourceVersion"
+      )
+    ).toBe(
+      "id:123"
+    );
+  });
 });

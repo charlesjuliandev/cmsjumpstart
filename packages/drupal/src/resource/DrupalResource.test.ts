@@ -1154,4 +1154,21 @@ describe("DrupalResource", () => {
       "Previous Page Event"
     );
   });
+  it("supports resource versions", () => {
+    const resource =
+      new DrupalResource("node--page");
+
+    resource.resourceVersion(
+      "rel:working-copy"
+    );
+
+    expect(
+      resource
+        .getQuery()
+        .getOptions()
+        .resourceVersion
+    ).toBe(
+      "rel:working-copy"
+    );
+  });
 });

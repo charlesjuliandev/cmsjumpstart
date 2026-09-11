@@ -1,4 +1,5 @@
 import { DrupalResourceResponse } from "@cmsjumpstart/drupal";
+
 import type {
   DrupalFilterOperator,
   DrupalFilterValue,
@@ -7,20 +8,30 @@ import type {
   DrupalRelationshipDefinitions,
   DrupalResponse,
   DrupalResource,
+  DrupalResourceVersion,
   DrupalQueryBuilder,
 } from "@cmsjumpstart/drupal";
+
 import { NextRequestExecutor } from "../executor/NextRequestExecutor";
+
 export class NextCMSResource<
-  TAttributes extends Record<string, unknown> = Record<string, unknown>,
-  TRelationships extends Record<string, DrupalJsonApiRelationship> = Record<
+  TAttributes extends Record<string, unknown> =
+    Record<string, unknown>,
+
+  TRelationships extends Record<
+    string,
+    DrupalJsonApiRelationship
+  > = Record<
     string,
     DrupalJsonApiRelationship
   >,
-  TIncludedAttributes extends Record<string, unknown> = Record<string, unknown>,
-  TRelationshipDefinitions extends DrupalRelationshipDefinitions = Record<
-    string,
-    never
-  >,
+
+  TIncludedAttributes extends Record<string, unknown> =
+    Record<string, unknown>,
+
+  TRelationshipDefinitions extends
+    DrupalRelationshipDefinitions =
+      Record<string, never>,
 > {
   constructor(
     private readonly resource: DrupalResource<
@@ -29,45 +40,153 @@ export class NextCMSResource<
       TIncludedAttributes,
       TRelationshipDefinitions
     >,
+
     private readonly executor?: NextRequestExecutor,
   ) {}
-  include(...fields: string[]): this {
-    this.resource.include(...fields);
+
+  /**
+   * Targets an individual resource
+   * by JSON:API resource ID.
+   *
+   * Example:
+   *
+   * .id("f457344f-7035-4d5c-b03d-3d9f5586908e")
+   */
+  id(
+    resourceId: string
+  ): this {
+    this.resource.id(
+      resourceId
+    );
+
     return this;
   }
-  fields(...fields: string[]): this {
-    this.resource.fields(...fields);
+
+  include(
+    ...fields: string[]
+  ): this {
+    this.resource.include(
+      ...fields
+    );
+
     return this;
   }
-  /** * Enables the Next.js HTTP/data cache * for this resource request. * * Example: * * .cache() * .get() */ cache(): this {
+
+  fields(
+    ...fields: string[]
+  ): this {
+    this.resource.fields(
+      ...fields
+    );
+
+    return this;
+  }
+
+  /**
+   * Enables the Next.js HTTP/data cache
+   * for this resource request.
+   *
+   * Example:
+   *
+   * .cache()
+   * .get()
+   */
+  cache(): this {
     this.executor?.enableCache();
+
     return this;
   }
-  /** * Equality filter. * * Example: * * .filter("status", true) */ filter(
-    field: string,
-    value: DrupalFilterValue,
-  ): this;
-  /** * Comparison, string, collection, * or range filter. * * Example: * * .filter( * "title", * "CONTAINS", * "Drupal" * ) */ filter(
-    field: string,
-    operator: Exclude<DrupalFilterOperator, "IS NULL" | "IS NOT NULL">,
-    value: DrupalFilterValue,
-  ): this;
-  /** * NULL filter. * * Example: * * .filter( * "field_image", * "IS NULL" * ) */ filter(
-    field: string,
-    operator: "IS NULL" | "IS NOT NULL",
-  ): this;
+
+  /**
+   * Requests a specific Drupal resource
+   * version.
+   *
+   * Example:
+   *
+   * .resourceVersion(
+   *   "rel:working-copy"
+   * )
+   */
+  resourceVersion(
+    version: DrupalResourceVersion
+  ): this {
+    this.resource.resourceVersion(
+      version
+    );
+
+    return this;
+  }
+
+  /**
+   * Equality filter.
+   *
+   * Example:
+   *
+   * .filter("status", true)
+   */
   filter(
     field: string,
-    operatorOrValue: DrupalFilterOperator | DrupalFilterValue,
+    value: DrupalFilterValue
+  ): this;
+
+  /**
+   * Comparison, string, collection,
+   * or range filter.
+   *
+   * Example:
+   *
+   * .filter(
+   *   "title",
+   *   "CONTAINS",
+   *   "Drupal"
+   * )
+   */
+  filter(
+    field: string,
+    operator: Exclude<
+      DrupalFilterOperator,
+      "IS NULL" | "IS NOT NULL"
+    >,
+    value: DrupalFilterValue
+  ): this;
+
+  /**
+   * NULL filter.
+   *
+   * Example:
+   *
+   * .filter(
+   *   "field_image",
+   *   "IS NULL"
+   * )
+   */
+  filter(
+    field: string,
+    operator:
+      | "IS NULL"
+      | "IS NOT NULL",
+  ): this;
+
+  filter(
+    field: string,
+    operatorOrValue:
+      | DrupalFilterOperator
+      | DrupalFilterValue,
     value?: DrupalFilterValue,
   ): this {
-    if (value === undefined) {
+    if (
+      value === undefined
+    ) {
       this.resource.filter(
         field,
-        operatorOrValue as DrupalFilterOperator | DrupalFilterValue,
+        operatorOrValue as
+          | DrupalFilterOperator
+          | DrupalFilterValue,
       );
+
       return this;
     }
+
     this.resource.filter(
       field,
       operatorOrValue as Exclude<
@@ -76,23 +195,44 @@ export class NextCMSResource<
       >,
       value,
     );
+
     return this;
   }
-  sort(...fields: string[]): this {
-    this.resource.sort(...fields);
+
+  sort(
+    ...fields: string[]
+  ): this {
+    this.resource.sort(
+      ...fields
+    );
+
     return this;
   }
-  page(number: number): this {
-    this.resource.page(number);
+
+  page(
+    number: number
+  ): this {
+    this.resource.page(
+      number
+    );
+
     return this;
   }
-  limit(number: number): this {
-    this.resource.limit(number);
+
+  limit(
+    number: number
+  ): this {
+    this.resource.limit(
+      number
+    );
+
     return this;
   }
+
   getQuery(): DrupalQueryBuilder {
     return this.resource.getQuery();
   }
+
   async get(): Promise<
     DrupalResourceResponse<
       TAttributes,
@@ -103,13 +243,21 @@ export class NextCMSResource<
   > {
     return this.resource.get();
   }
+
   async next(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
-  ): Promise<DrupalResponse<
-    TAttributes,
-    TRelationships,
-    TIncludedAttributes
-  > | null>;
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
+
   async next(
     response: DrupalResourceResponse<
       TAttributes,
@@ -117,116 +265,243 @@ export class NextCMSResource<
       TIncludedAttributes,
       TRelationshipDefinitions
     >,
-  ): Promise<DrupalResponse<
-    TAttributes,
-    TRelationships,
-    TIncludedAttributes
-  > | null>;
-  async next(
-    response:
-      | DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>
-      | DrupalResourceResponse<
-          TAttributes,
-          TRelationships,
-          TIncludedAttributes,
-          TRelationshipDefinitions
-        >,
-  ): Promise<DrupalResponse<
-    TAttributes,
-    TRelationships,
-    TIncludedAttributes
-  > | null> {
-    const rawResponse =
-      response instanceof DrupalResourceResponse ? response.toJSON() : response;
-    return this.resource.next(rawResponse);
-  }
-  async previous(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
-  ): Promise<DrupalResponse<
-    TAttributes,
-    TRelationships,
-    TIncludedAttributes
-  > | null>;
-  async previous(
-    response: DrupalResourceResponse<
+  ): Promise<
+    DrupalResponse<
       TAttributes,
       TRelationships,
-      TIncludedAttributes,
-      TRelationshipDefinitions
-    >,
-  ): Promise<DrupalResponse<
-    TAttributes,
-    TRelationships,
-    TIncludedAttributes
-  > | null>;
-  async previous(
+      TIncludedAttributes
+    > | null
+  >;
+
+  async next(
     response:
-      | DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>
-      | DrupalResourceResponse<
-          TAttributes,
-          TRelationships,
-          TIncludedAttributes,
-          TRelationshipDefinitions
-        >,
-  ): Promise<DrupalResponse<
-    TAttributes,
-    TRelationships,
-    TIncludedAttributes
-  > | null> {
-    const rawResponse =
-      response instanceof DrupalResourceResponse ? response.toJSON() : response;
-    return this.resource.previous(rawResponse);
-  }
-  relationshipData(
-    relationship: DrupalJsonApiRelationship | undefined,
-  ): DrupalJsonApiRelationship["data"] | null;
-  relationshipData(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
-    relationship: DrupalJsonApiRelationship | undefined,
-  ): DrupalJsonApiRelationship["data"] | null;
-  relationshipData(
-    responseOrRelationship:
-      | DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>
-      | DrupalJsonApiRelationship
-      | undefined,
-    relationship?: DrupalJsonApiRelationship | undefined,
-  ): DrupalJsonApiRelationship["data"] | null {
-    if (relationship !== undefined) {
-      return this.resource.relationshipData(
-        responseOrRelationship as DrupalResponse<
+      | DrupalResponse<
           TAttributes,
           TRelationships,
           TIncludedAttributes
+        >
+      | DrupalResourceResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes,
+          TRelationshipDefinitions
         >,
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  > {
+    const rawResponse =
+      response instanceof
+      DrupalResourceResponse
+        ? response.toJSON()
+        : response;
+
+    return this.resource.next(
+      rawResponse
+    );
+  }
+
+  async previous(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
+
+  async previous(
+    response: DrupalResourceResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes,
+      TRelationshipDefinitions
+    >,
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  >;
+
+  async previous(
+    response:
+      | DrupalResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes
+        >
+      | DrupalResourceResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes,
+          TRelationshipDefinitions
+        >,
+  ): Promise<
+    DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    > | null
+  > {
+    const rawResponse =
+      response instanceof
+      DrupalResourceResponse
+        ? response.toJSON()
+        : response;
+
+    return this.resource.previous(
+      rawResponse
+    );
+  }
+
+  relationshipData(
+    relationship:
+      | DrupalJsonApiRelationship
+      | undefined,
+  ):
+    | DrupalJsonApiRelationship["data"]
+    | null;
+
+  relationshipData(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+    relationship:
+      | DrupalJsonApiRelationship
+      | undefined,
+  ):
+    | DrupalJsonApiRelationship["data"]
+    | null;
+
+  relationshipData(
+    responseOrRelationship:
+      | DrupalResponse<
+          TAttributes,
+          TRelationships,
+          TIncludedAttributes
+        >
+      | DrupalJsonApiRelationship
+      | undefined,
+
+    relationship?:
+      | DrupalJsonApiRelationship
+      | undefined,
+  ):
+    | DrupalJsonApiRelationship["data"]
+    | null {
+    if (
+      relationship !== undefined
+    ) {
+      return this.resource.relationshipData(
+        responseOrRelationship as
+          DrupalResponse<
+            TAttributes,
+            TRelationships,
+            TIncludedAttributes
+          >,
         relationship,
       );
     }
+
     return this.resource.relationshipData(
-      responseOrRelationship as DrupalJsonApiRelationship | undefined,
+      responseOrRelationship as
+        | DrupalJsonApiRelationship
+        | undefined,
     );
   }
+
   getIncludedResource(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
-    relationship: DrupalJsonApiRelationship | undefined,
-  ): DrupalJsonApiResource<TIncludedAttributes> | null {
-    return this.resource.getIncludedResource(response, relationship);
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+
+    relationship:
+      | DrupalJsonApiRelationship
+      | undefined,
+  ):
+    | DrupalJsonApiResource<
+        TIncludedAttributes
+      >
+    | null {
+    return this.resource.getIncludedResource(
+      response,
+      relationship,
+    );
   }
+
   getIncludedResources(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
-    relationship: DrupalJsonApiRelationship | undefined,
-  ): DrupalJsonApiResource<TIncludedAttributes>[] {
-    return this.resource.getIncludedResources(response, relationship);
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+
+    relationship:
+      | DrupalJsonApiRelationship
+      | undefined,
+  ):
+    DrupalJsonApiResource<
+      TIncludedAttributes
+    >[] {
+    return this.resource.getIncludedResources(
+      response,
+      relationship,
+    );
   }
-  includedResource<TRelationship extends keyof TRelationships>(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
+
+  includedResource<
+    TRelationship extends keyof TRelationships
+  >(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+
     relationship: TRelationship,
-  ): DrupalJsonApiResource<TIncludedAttributes> | null {
-    return this.resource.includedResource(response, relationship);
+  ):
+    | DrupalJsonApiResource<
+        TIncludedAttributes
+      >
+    | null {
+    return this.resource.includedResource(
+      response,
+      relationship,
+    );
   }
-  includedResources<TRelationship extends keyof TRelationships>(
-    response: DrupalResponse<TAttributes, TRelationships, TIncludedAttributes>,
+
+  includedResources<
+    TRelationship extends keyof TRelationships
+  >(
+    response: DrupalResponse<
+      TAttributes,
+      TRelationships,
+      TIncludedAttributes
+    >,
+
     relationship: TRelationship,
-  ): DrupalJsonApiResource<TIncludedAttributes>[] {
-    return this.resource.includedResources(response, relationship);
+  ):
+    DrupalJsonApiResource<
+      TIncludedAttributes
+    >[] {
+    return this.resource.includedResources(
+      response,
+      relationship,
+    );
   }
 }
+

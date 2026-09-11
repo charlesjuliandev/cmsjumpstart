@@ -1,103 +1,26 @@
 import {
-  getPages
+  draftMode
+} from "next/headers";
+
+import {
+  getPages,
+  getPreviewPages
 } from "./lib/pages";
 
 import {
   PageList
 } from "./components/PageList";
 
-function createSummary(
-  value: unknown,
-  maxLength = 160
-): string {
-  if (
-    !value ||
-    typeof value !== "object"
-  ) {
-    return "";
-  }
-
-  const body =
-    value as {
-      value?: unknown;
-
-      summary?: unknown;
-
-      processed?: unknown;
-    };
-
-  const source =
-    typeof body.summary === "string" &&
-    body.summary.trim()
-      ? body.summary
-      : typeof body.processed === "string" &&
-          body.processed.trim()
-        ? body.processed
-        : typeof body.value === "string"
-          ? body.value
-          : "";
-
-  if (!source) {
-    return "";
-  }
-
-  const text =
-    source
-      .replace(
-        /<[^>]*>/g,
-        " "
-      )
-      .replace(
-        /&nbsp;/gi,
-        " "
-      )
-      .replace(
-        /&amp;/gi,
-        "&"
-      )
-      .replace(
-        /&lt;/gi,
-        "<"
-      )
-      .replace(
-        /&gt;/gi,
-        ">"
-      )
-      .replace(
-        /\s+/g,
-        " "
-      )
-      .trim();
-
-  if (
-    text.length <= maxLength
-  ) {
-    return text;
-  }
-
-  return `${text
-    .slice(0, maxLength)
-    .trimEnd()}…`;
-}
-
 export default async function HomePage() {
+  const {
+    isEnabled: isDraftMode
+  } =
+    await draftMode();
+
   const pages =
-    await getPages();
-
-  const pageItems =
-    pages.map(page => ({
-      id: page.id,
-
-      title: String(
-        page.attributes.title ??
-          "Untitled"
-      ),
-
-      summary:
-        createSummary(
-          page.attributes.body
-        )
-    }));
+    isDraftMode
+      ? await getPreviewPages()
+      : await getPages();
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -117,10 +40,20 @@ export default async function HomePage() {
             CMSJumpstart, Tailwind CSS, and
             React Aria Components.
           </p>
+
+          {isDraftMode ? (
+            <div
+              role="status"
+              className="mt-6 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900"
+            >
+              Draft Mode is enabled. You are
+              viewing Drupal working-copy content.
+            </div>
+          ) : null}
         </header>
 
         <PageList
-          pages={pageItems}
+          pages={pages}
         />
       </div>
     </main>

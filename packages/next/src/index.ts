@@ -22,3 +22,10 @@ export {
   revalidateResource
 } from "./revalidation/revalidateResource";
 
+export {
+  createPreviewHandler
+} from "./preview/createPreviewHandler";
+
+export type {
+  PreviewHandlerOptions
+} from "./preview/createPreviewHandler";

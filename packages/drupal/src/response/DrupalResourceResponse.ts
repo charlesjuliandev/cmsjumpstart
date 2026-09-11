@@ -66,7 +66,7 @@ export class DrupalResourceResponse<
   }
 
   get length(): number {
-    return this.response.data.length;
+    return this.getResources().length;
   }
 
   /**
@@ -85,7 +85,7 @@ export class DrupalResourceResponse<
     TRelationshipDefinitions
   > | null {
     const resource =
-      this.response.data[index];
+      this.getResources()[index];
 
     if (!resource) {
       return null;
@@ -105,6 +105,13 @@ export class DrupalResourceResponse<
   /**
    * Returns all resource items.
    *
+   * JSON:API collection responses contain an
+   * array in `data`, while individual resource
+   * responses contain a single resource object.
+   *
+   * Both response shapes are normalized to an
+   * array of DrupalResourceItem instances here.
+   *
    * The relationship definition map is preserved for
    * every returned DrupalResourceItem.
    */
@@ -114,7 +121,7 @@ export class DrupalResourceResponse<
     TIncludedAttributes,
     TRelationshipDefinitions
   >[] {
-    return this.response.data.map(
+    return this.getResources().map(
       resource =>
         new DrupalResourceItem<
           TAttributes,
@@ -230,5 +237,25 @@ export class DrupalResourceResponse<
     TIncludedAttributes
   > {
     return this.response;
+  }
+
+  /**
+   * Normalizes JSON:API collection and individual
+   * resource responses into an array.
+   *
+   * Collections provide:
+   *
+   * data: [...]
+   *
+   * Individual resources provide:
+   *
+   * data: {...}
+   */
+  private getResources() {
+    return Array.isArray(
+      this.response.data
+    )
+      ? this.response.data
+      : [this.response.data];
   }
 }

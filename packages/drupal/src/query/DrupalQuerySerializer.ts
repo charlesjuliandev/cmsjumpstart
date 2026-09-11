@@ -54,6 +54,16 @@ export class DrupalQuerySerializer {
       );
     }
 
+    if (
+      options.resourceVersion !==
+      undefined
+    ) {
+      params.set(
+        "resourceVersion",
+        options.resourceVersion
+      );
+    }
+
     if (options.filters?.length) {
       options.filters.forEach(
         (
@@ -127,7 +137,9 @@ export class DrupalQuerySerializer {
   private static setValue(
     params: URLSearchParams,
     key: string,
-    value: DrupalFilterValue | undefined
+    value:
+      | DrupalFilterValue
+      | undefined
   ): void {
     if (Array.isArray(value)) {
       value.forEach(
@@ -148,3 +160,4 @@ export class DrupalQuerySerializer {
     );
   }
 }
+

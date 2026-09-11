@@ -21,17 +21,31 @@ export type DrupalFilterValue =
   | boolean
   | Array<string | number | boolean>;
 
+export type DrupalResourceVersion =
+  | "rel:working-copy"
+  | "rel:latest-version"
+  | `id:${string}`;
+
 export interface DrupalFilter {
   field: string;
+
   operator: DrupalFilterOperator;
+
   value?: DrupalFilterValue;
 }
 
 export interface DrupalQueryOptions {
   includes?: string[];
+
   fields?: string[];
+
   filters?: DrupalFilter[];
+
   sort?: string[];
+
   page?: number;
+
   limit?: number;
+
+  resourceVersion?: DrupalResourceVersion;
 }
