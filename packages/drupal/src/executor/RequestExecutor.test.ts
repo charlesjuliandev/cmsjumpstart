@@ -138,6 +138,93 @@ describe("RequestExecutor", () => {
     vi.unstubAllGlobals();
   });
 
+  it("includes status text, response body, and URL in request errors", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: vi.fn().mockResolvedValue(
+          '{"message":"Access denied."}'
+        )
+      })
+    );
+
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    await expect(
+      executor.get(
+        "/jsonapi/node/page"
+      )
+    ).rejects.toThrow(
+      'Request failed with status 403 Forbidden: {"message":"Access denied."} (https://example.com/jsonapi/node/page)'
+    );
+
+    vi.unstubAllGlobals();
+  });
+
+  it("does not include empty status text in request errors", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "   ",
+        text: vi.fn().mockResolvedValue("")
+      })
+    );
+
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    await expect(
+      executor.get(
+        "/jsonapi/node/page"
+      )
+    ).rejects.toThrow(
+      "Request failed with status 500 (https://example.com/jsonapi/node/page)"
+    );
+
+    vi.unstubAllGlobals();
+  });
+
+  it("preserves the HTTP error when the response body cannot be read", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: "Bad Gateway",
+        text: vi.fn().mockRejectedValue(
+          new Error(
+            "Response body could not be read."
+          )
+        )
+      })
+    );
+
+    const executor =
+      new RequestExecutor({
+        baseUrl: "https://example.com"
+      });
+
+    await expect(
+      executor.get(
+        "/jsonapi/node/page"
+      )
+    ).rejects.toThrow(
+      "Request failed with status 502 Bad Gateway (https://example.com/jsonapi/node/page)"
+    );
+
+    vi.unstubAllGlobals();
+  });
+
   it("adds basic authentication headers", async () => {
     global.fetch =
       vi.fn().mockResolvedValue({
