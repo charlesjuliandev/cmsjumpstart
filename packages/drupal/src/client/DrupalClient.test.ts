@@ -21,11 +21,14 @@ describe("DrupalClient", () => {
   it("creates a Drupal resource", () => {
     const client =
       new DrupalClient({
-        baseUrl: "https://example.com"
+        baseUrl:
+          "https://example.com"
       });
 
     const resource =
-      client.resource("node--page");
+      client.resource(
+        "node--page"
+      );
 
     expect(
       resource
@@ -34,103 +37,234 @@ describe("DrupalClient", () => {
     ).toBe("node--page");
   });
 
-  it("uses an injected request executor", async () => {
-    const executor = {
-      get: vi.fn()
-        .mockResolvedValue({
-          data: []
-        })
-    } as unknown as RequestExecutor;
+  it(
+    "uses an injected request executor",
+    async () => {
+      const executor = {
+        get: vi.fn()
+          .mockResolvedValue({
+            data: []
+          })
+      } as unknown as RequestExecutor;
 
-    const client =
-      new DrupalClient(
-        {
-          baseUrl: "https://example.com"
-        },
-        executor
-      );
-
-    const result =
-      await client
-        .resource("node--page")
-        .limit(10)
-        .get();
-
-    expect(executor.get)
-      .toHaveBeenCalledTimes(1);
-
-    expect(result)
-      .toBeInstanceOf(
-        DrupalResourceResponse
-      );
-
-    expect(result.toJSON())
-      .toEqual({
-        data: []
-      });
-  });
-
-  it("adds custom Drupal headers", () => {
-    const executor =
-      new RequestExecutor({
-        baseUrl: "https://example.com",
-        headers: {
-          "X-Consumer-ID": "consumer-id",
-          "api-key": "api-key-value"
-        }
-      });
-
-    expect(
-      executor.getHeaders()
-    ).toEqual({
-      Accept: "application/vnd.api+json",
-      "X-Consumer-ID": "consumer-id",
-      "api-key": "api-key-value"
-    });
-  });
-
-  it("supports typed Drupal resources", async () => {
-    const executor = {
-      get: vi.fn().mockResolvedValue({
-        jsonapi: {
-          version: "1.0"
-        },
-
-        data: [
+      const client =
+        new DrupalClient(
           {
-            type: "node--page",
-            id: "123",
-            attributes: {
-              title: "Test Page",
-              status: true
+            baseUrl:
+              "https://example.com"
+          },
+          executor
+        );
+
+      const result =
+        await client
+          .resource(
+            "node--page"
+          )
+          .limit(10)
+          .get();
+
+      expect(
+        executor.get
+      ).toHaveBeenCalledTimes(1);
+
+      expect(result)
+        .toBeInstanceOf(
+          DrupalResourceResponse
+        );
+
+      expect(result.toJSON())
+        .toEqual({
+          data: []
+        });
+    }
+  );
+
+  it(
+    "resolves custom Drupal headers",
+    () => {
+      const client =
+        new DrupalClient({
+          baseUrl:
+            "https://example.com",
+
+          headers: {
+            "X-Consumer-ID":
+              "consumer-id",
+
+            "api-key":
+              "api-key-value"
+          }
+        });
+
+      expect(
+        client.getHeaders()
+      ).toEqual({
+        Accept:
+          "application/vnd.api+json",
+
+        "X-Consumer-ID":
+          "consumer-id",
+
+        "api-key":
+          "api-key-value"
+      });
+    }
+  );
+
+  it(
+    "gives request headers precedence over Drupal headers",
+    () => {
+      const client =
+        new DrupalClient({
+          baseUrl:
+            "https://example.com",
+
+          headers: {
+            "X-Consumer-ID":
+              "from-drupal-headers",
+
+            "X-Test":
+              "from-drupal-headers"
+          },
+
+          request: {
+            headers: {
+              "X-Consumer-ID":
+                "from-request-headers",
+
+              "X-Test":
+                "from-request-headers"
             }
           }
-        ]
-      })
-    } as unknown as RequestExecutor;
+        });
 
-    const client =
-      new DrupalClient(
-        {
-          baseUrl: "https://example.com"
-        },
-        executor
+      expect(
+        client.getHeaders()
+      ).toEqual({
+        Accept:
+          "application/vnd.api+json",
+
+        "X-Consumer-ID":
+          "from-request-headers",
+
+        "X-Test":
+          "from-request-headers"
+      });
+    }
+  );
+
+  it(
+    "gives authentication precedence over custom headers",
+    () => {
+      const client =
+        new DrupalClient({
+          baseUrl:
+            "https://example.com",
+
+          headers: {
+            Authorization:
+              "Basic incorrect-value",
+
+            "X-Test":
+              "from-drupal-headers"
+          },
+
+          request: {
+            headers: {
+              Authorization:
+                "Bearer incorrect-value",
+
+              "X-Test":
+                "from-request-headers"
+            }
+          },
+
+          auth: {
+            type: "bearer",
+            token:
+              "correct-token"
+          }
+        });
+
+      expect(
+        client.getHeaders()
+      ).toEqual({
+        Accept:
+          "application/vnd.api+json",
+
+        Authorization:
+          "Bearer correct-token",
+
+        "X-Test":
+          "from-request-headers"
+      });
+    }
+  );
+
+  it(
+    "supports typed Drupal resources",
+    async () => {
+      const executor = {
+        get: vi.fn()
+          .mockResolvedValue({
+            jsonapi: {
+              version: "1.0"
+            },
+
+            data: [
+              {
+                type:
+                  "node--page",
+
+                id: "123",
+
+                attributes: {
+                  title:
+                    "Test Page",
+
+                  status: true
+                }
+              }
+            ]
+          })
+      } as unknown as RequestExecutor;
+
+      const client =
+        new DrupalClient(
+          {
+            baseUrl:
+              "https://example.com"
+          },
+          executor
+        );
+
+      const response =
+        await client
+          .resource<{
+            title: string;
+            status: boolean;
+          }>(
+            "node--page"
+          )
+          .get();
+
+      expect(
+        response.data[0]
+          .attributes.title
+      ).toBe(
+        "Test Page"
       );
 
-    const response = await client
-      .resource<{
-        title: string;
-        status: boolean;
-      }>("node--page")
-      .get();
+      expect(
+        response.data[0]
+          .attributes.status
+      ).toBe(true);
 
-    expect(response.data[0].attributes.title)
-      .toBe("Test Page");
-
-    expect(response.data[0].attributes.status)
-      .toBe(true);
-
-    expect(executor.get)
-      .toHaveBeenCalledTimes(1);
-  });
+      expect(
+        executor.get
+      ).toHaveBeenCalledTimes(1);
+    }
+  );
 });
+

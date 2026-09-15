@@ -1,10 +1,13 @@
 import {
   describe,
   expect,
-  it
+  it,
+  vi
 } from "vitest";
 
-import { NextCMSClient } from "./NextCMSClient";
+import {
+  NextCMSClient
+} from "./NextCMSClient";
 
 import {
   NextCMSResource
@@ -21,15 +24,17 @@ describe(
             drupal: {
               baseUrl:
                 "https://example.com",
+
               auth: {
                 type: "none"
               }
             }
           });
 
-        expect(client).toBeInstanceOf(
-          NextCMSClient
-        );
+        expect(client)
+          .toBeInstanceOf(
+            NextCMSClient
+          );
       }
     );
 
@@ -41,6 +46,7 @@ describe(
             drupal: {
               baseUrl:
                 "https://example.com",
+
               auth: {
                 type: "none"
               }
@@ -52,7 +58,8 @@ describe(
             "node--event"
           );
 
-        expect(resource).toBeDefined();
+        expect(resource)
+          .toBeDefined();
 
         expect(
           typeof resource.get
@@ -70,24 +77,27 @@ describe(
           typeof resource.limit
         ).toBe("function");
 
-        expect(resource).toBeInstanceOf(
-          NextCMSResource
-        );
+        expect(resource)
+          .toBeInstanceOf(
+            NextCMSResource
+          );
       }
     );
 
     it(
-      "preserves custom request headers",
+      "resolves custom request headers",
       () => {
         const client =
           new NextCMSClient({
             drupal: {
               baseUrl:
                 "https://example.com",
+
               request: {
                 headers: {
                   "X-Consumer-ID":
                     "cmsjumpstart-test",
+
                   "api-key":
                     "test-key"
                 }
@@ -100,8 +110,10 @@ describe(
         ).toEqual({
           Accept:
             "application/vnd.api+json",
+
           "X-Consumer-ID":
             "cmsjumpstart-test",
+
           "api-key":
             "test-key"
         });
@@ -116,9 +128,12 @@ describe(
             drupal: {
               baseUrl:
                 "https://example.com",
+
               auth: {
                 type: "bearer",
-                token: "test-token"
+
+                token:
+                  "test-token"
               }
             }
           });
@@ -128,9 +143,184 @@ describe(
         ).toEqual({
           Accept:
             "application/vnd.api+json",
+
           Authorization:
             "Bearer test-token"
         });
+      }
+    );
+
+    it(
+      "preserves header precedence",
+      () => {
+        const client =
+          new NextCMSClient({
+            drupal: {
+              baseUrl:
+                "https://example.com",
+
+              headers: {
+                Authorization:
+                  "Basic incorrect-value",
+
+                "X-Test":
+                  "from-drupal-headers"
+              },
+
+              request: {
+                headers: {
+                  Authorization:
+                    "Bearer incorrect-value",
+
+                  "X-Test":
+                    "from-request-headers"
+                }
+              },
+
+              auth: {
+                type: "bearer",
+
+                token:
+                  "correct-token"
+              }
+            }
+          });
+
+        expect(
+          client.getHeaders()
+        ).toEqual({
+          Accept:
+            "application/vnd.api+json",
+
+          Authorization:
+            "Bearer correct-token",
+
+          "X-Test":
+            "from-request-headers"
+        });
+      }
+    );
+
+    it(
+      "passes resolved headers to resource requests",
+      async () => {
+        const fetchMock =
+          vi
+            .spyOn(
+              globalThis,
+              "fetch"
+            )
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({
+                  jsonapi: {
+                    version:
+                      "1.0"
+                  },
+
+                  data: []
+                }),
+                {
+                  status: 200,
+
+                  headers: {
+                    "Content-Type":
+                      "application/vnd.api+json"
+                  }
+                }
+              )
+            );
+
+        const client =
+          new NextCMSClient({
+            drupal: {
+              baseUrl:
+                "https://example.com",
+
+              headers: {
+                "X-Test":
+                  "from-drupal-headers",
+
+                Authorization:
+                  "Basic incorrect-value"
+              },
+
+              request: {
+                headers: {
+                  "X-Test":
+                    "from-request-headers"
+                }
+              },
+
+              auth: {
+                type: "bearer",
+
+                token:
+                  "correct-token"
+              }
+            }
+          });
+
+        await client
+          .resource(
+            "node--page"
+          )
+          .get();
+
+        expect(
+          fetchMock
+        ).toHaveBeenCalledTimes(1);
+
+        const request =
+          fetchMock.mock
+            .calls[0][0];
+
+        const requestInit =
+          fetchMock.mock
+            .calls[0][1];
+
+        expect(request)
+          .toBeDefined();
+
+        expect(requestInit)
+          .toBeDefined();
+
+        const headers =
+          requestInit?.headers;
+
+        expect(headers)
+          .toBeDefined();
+
+        const resolvedHeaders =
+          new Headers(
+            headers
+          );
+
+        expect(
+          resolvedHeaders.get(
+            "Accept"
+          )
+        ).toBe(
+          "application/vnd.api+json"
+        );
+
+        expect(
+          resolvedHeaders.get(
+            "X-Test"
+          )
+        ).toBe(
+          "from-request-headers"
+        );
+
+        expect(
+          resolvedHeaders.get(
+            "Authorization"
+          )
+        ).toBe(
+          "Bearer correct-token"
+        );
+
+        fetchMock.mockRestore();
       }
     );
 
@@ -142,6 +332,7 @@ describe(
             drupal: {
               baseUrl:
                 "https://example.com",
+
               request: {
                 cache:
                   "force-cache"
@@ -149,9 +340,10 @@ describe(
             }
           });
 
-        expect(client).toBeInstanceOf(
-          NextCMSClient
-        );
+        expect(client)
+          .toBeInstanceOf(
+            NextCMSClient
+          );
       }
     );
   }
