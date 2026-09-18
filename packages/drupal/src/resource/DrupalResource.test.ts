@@ -6,6 +6,15 @@ import {
 } from "vitest";
 
 import {
+  DrupalResourceResponse
+} from "../response/DrupalResourceResponse";
+
+import type {
+  DrupalToManyRelationship,
+  DrupalToOneRelationship
+} from "../types/DrupalResponse";
+
+import {
   DrupalResource
 } from "./DrupalResource";
 
@@ -1171,4 +1180,401 @@ describe("DrupalResource", () => {
       "rel:working-copy"
     );
   });
+  it(
+    "returns a DrupalResourceResponse from get",
+    async () => {
+      type CourseAttributes = {
+        title: string;
+        field_course_code: string;
+        field_credits: number;
+      };
+
+      type CourseRelationships = {
+        field_department: DrupalJsonApiRelationship;
+      };
+
+      const response:
+        DrupalResponse<
+          CourseAttributes,
+          CourseRelationships
+        > = {
+        jsonapi: {
+          version: "1.0"
+        },
+
+        data: [
+          {
+            type: "node--course",
+            id: "course-101",
+
+            attributes: {
+              title:
+                "Introduction to Computer Science",
+
+              field_course_code:
+                "CS 101",
+
+              field_credits: 3
+            },
+
+            relationships: {
+              field_department: {
+                data: {
+                  type:
+                    "node--department",
+
+                  id:
+                    "department-1"
+                }
+              }
+            }
+          }
+        ]
+      };
+
+      const executor = {
+        get: vi
+          .fn()
+          .mockResolvedValue(
+            response
+          )
+      } as unknown as RequestExecutor;
+
+      const resource =
+        new DrupalResource<
+          CourseAttributes,
+          CourseRelationships
+        >(
+          "node--course",
+          executor
+        );
+
+      const resourceResponse =
+        await resource.get();
+
+      expect(
+        resourceResponse
+      ).toBeInstanceOf(
+        DrupalResourceResponse
+      );
+
+      const course =
+        resourceResponse.getOne();
+
+      expect(course)
+        .not
+        .toBeNull();
+
+      expect(
+        course?.attributes.field_course_code
+      ).toBe("CS 101");
+
+      expect(
+        course?.attributes.field_credits
+      ).toBe(3);
+    }
+  );
+
+  it(
+    "provides a convenient typed Course response API",
+    async () => {
+      type CourseAttributes = {
+        title: string;
+        field_course_code: string;
+        field_credits: number;
+      };
+
+      type DepartmentAttributes = {
+        title: string;
+      };
+
+      type PersonAttributes = {
+        title: string;
+      };
+
+      type LocationAttributes = {
+        title: string;
+      };
+
+      type CourseRelationships = {
+        field_department:
+          DrupalJsonApiRelationship;
+
+        field_instructor:
+          DrupalJsonApiRelationship;
+
+        field_location:
+          DrupalJsonApiRelationship;
+
+        field_prerequisites:
+          DrupalJsonApiRelationship;
+      };
+
+      type CourseRelationshipDefinitions = {
+        field_department:
+          DrupalToOneRelationship<
+            DepartmentAttributes
+          >;
+
+        field_instructor:
+          DrupalToOneRelationship<
+            PersonAttributes
+          >;
+
+        field_location:
+          DrupalToOneRelationship<
+            LocationAttributes
+          >;
+
+        field_prerequisites:
+          DrupalToManyRelationship<
+            CourseAttributes
+          >;
+      };
+
+      const response:
+        DrupalResponse<
+          CourseAttributes,
+          CourseRelationships
+        > = {
+        jsonapi: {
+          version: "1.0"
+        },
+
+        data: [
+          {
+            type: "node--course",
+            id: "course-301",
+
+            attributes: {
+              title: "Algorithms",
+              field_course_code:
+                "CS 301",
+              field_credits: 3
+            },
+
+            relationships: {
+              field_department: {
+                data: {
+                  type:
+                    "node--department",
+                  id:
+                    "department-cs"
+                }
+              },
+
+              field_instructor: {
+                data: {
+                  type:
+                    "node--person",
+                  id:
+                    "person-jane"
+                }
+              },
+
+              field_location: {
+                data: {
+                  type:
+                    "node--location",
+                  id:
+                    "location-science"
+                }
+              },
+
+              field_prerequisites: {
+                data: [
+                  {
+                    type:
+                      "node--course",
+                    id:
+                      "course-201"
+                  },
+
+                  {
+                    type:
+                      "node--course",
+                    id:
+                      "course-math-201"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+
+        included: [
+          {
+            type:
+              "node--department",
+            id:
+              "department-cs",
+
+            attributes: {
+              title:
+                "Computer Science"
+            }
+          },
+
+          {
+            type:
+              "node--person",
+            id:
+              "person-jane",
+
+            attributes: {
+              title:
+                "Dr. Jane Smith"
+            }
+          },
+
+          {
+            type:
+              "node--location",
+            id:
+              "location-science",
+
+            attributes: {
+              title:
+                "Science Building 101"
+            }
+          },
+
+          {
+            type:
+              "node--course",
+            id:
+              "course-201",
+
+            attributes: {
+              title:
+                "Data Structures",
+              field_course_code:
+                "CS 201",
+              field_credits: 3
+            }
+          },
+
+          {
+            type:
+              "node--course",
+            id:
+              "course-math-201",
+
+            attributes: {
+              title:
+                "Discrete Mathematics",
+              field_course_code:
+                "MATH 201",
+              field_credits: 3
+            }
+          }
+        ]
+      };
+
+      const executor = {
+        get: vi
+          .fn()
+          .mockResolvedValue(
+            response
+          )
+      } as unknown as RequestExecutor;
+
+      const resource =
+        new DrupalResource<
+          CourseAttributes,
+          CourseRelationships,
+          Record<string, unknown>,
+          CourseRelationshipDefinitions
+        >(
+          "node--course",
+          executor
+        );
+
+      const resourceResponse =
+        await resource.get();
+
+      const course =
+        resourceResponse.getOne();
+
+      expect(course)
+        .not
+        .toBeNull();
+
+      /*
+      * Primary resource attributes.
+      */
+      expect(
+        course?.attributes.field_course_code
+      ).toBe("CS 301");
+
+      expect(
+        course?.attributes.field_credits
+      ).toBe(3);
+
+      /*
+      * To-one Department relationship.
+      */
+      const department =
+        course?.includedResource(
+          "field_department"
+        );
+
+      expect(
+        department?.attributes.title
+      ).toBe(
+        "Computer Science"
+      );
+
+      /*
+      * To-one Instructor relationship.
+      */
+      const instructor =
+        course?.includedResource(
+          "field_instructor"
+        );
+
+      expect(
+        instructor?.attributes.title
+      ).toBe(
+        "Dr. Jane Smith"
+      );
+
+      /*
+      * To-one Location relationship.
+      */
+      const location =
+        course?.includedResource(
+          "field_location"
+        );
+
+      expect(
+        location?.attributes.title
+      ).toBe(
+        "Science Building 101"
+      );
+
+      /*
+      * To-many self-referencing
+      * prerequisite relationship.
+      */
+      const prerequisites =
+        course?.includedResources(
+          "field_prerequisites"
+        );
+
+      expect(prerequisites)
+        .toHaveLength(2);
+
+      expect(
+        prerequisites?.map(
+          prerequisite =>
+            prerequisite.attributes
+              .field_course_code
+        )
+      ).toEqual([
+        "CS 201",
+        "MATH 201"
+      ]);
+    }
+  );
 });
