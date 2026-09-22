@@ -15,15 +15,15 @@ const consumerId = process.env.CONSUMERUUID;
 const apiKey = process.env.UP_API_KEY;
 
 type DepartmentAttributes = {
-  name: string;
+  title: string;
 };
 
 type PersonAttributes = {
-  name: string;
+  title: string;
 };
 
 type LocationAttributes = {
-  name: string;
+  title: string;
 };
 
 type CourseAttributes = {
@@ -120,14 +120,8 @@ describe("Drupal Course resource integration", () => {
       .limit(10)
       .get();
 
-    console.log(
-      "\nCourse collection:"
-    );
-
-    console.log(
-      "Course count:",
-      response.length
-    );
+    console.log("\nCourse collection:");
+    console.log("Course count:", response.length);
 
     expect(response.data).toBeDefined();
     expect(Array.isArray(response.data)).toBe(true);
@@ -166,8 +160,8 @@ describe("Drupal Course resource integration", () => {
 
     expect(course?.type).toBe("node--course");
     expect(course?.attributes.title).toBe(
-  "Introduction to Computer Science"
-);
+      "Introduction to Computer Science"
+    );
 
     const department =
       course?.includedResource(
@@ -200,20 +194,15 @@ describe("Drupal Course resource integration", () => {
       "node--location"
     );
 
-    console.log(
-      "\nIntro CS relationships:"
-    );
-
+    console.log("\nIntro CS relationships:");
     console.log(
       "Department:",
       department?.attributes
     );
-
     console.log(
       "Instructor:",
       instructor?.attributes
     );
-
     console.log(
       "Location:",
       location?.attributes
@@ -266,9 +255,7 @@ describe("Drupal Course resource integration", () => {
       "node--course"
     ]);
 
-    console.log(
-      "\nAlgorithms prerequisites:"
-    );
+    console.log("\nAlgorithms prerequisites:");
 
     for (const prerequisite of prerequisites ?? []) {
       console.log(
@@ -437,9 +424,9 @@ describe("Drupal Course resource integration", () => {
     expect(prerequisites).toHaveLength(1);
 
     expect(
-        prerequisites?.[0]?.attributes.title
+      prerequisites?.[0]?.attributes.title
     ).toBe(
-        "Introduction to Computer Science"
+      "Introduction to Computer Science"
     );
 
     const rawResponse =
@@ -455,4 +442,206 @@ describe("Drupal Course resource integration", () => {
       rawResponse.included
     ).toHaveLength(1);
   });
+
+  it("paginates through a real Drupal Course collection", async () => {
+    const client = createTestClient();
+
+    const firstPage = await client
+      .resource<CourseAttributes>("node--course")
+      .page(0)
+      .limit(2)
+      .get();
+
+    expect(firstPage.getAll()).toHaveLength(2);
+
+    const firstPageIds = firstPage
+      .getAll()
+      .map(course => course.id);
+
+    const firstPageTitles = firstPage
+      .getAll()
+      .map(course => course.attributes.title);
+
+    const secondPage = await firstPage.next();
+
+    expect(secondPage).not.toBeNull();
+    expect(secondPage?.getAll()).toHaveLength(2);
+
+    const secondPageIds = secondPage
+      ?.getAll()
+      .map(course => course.id);
+
+    const secondPageTitles = secondPage
+      ?.getAll()
+      .map(course => course.attributes.title);
+
+    expect(secondPageIds).not.toEqual(
+      firstPageIds
+    );
+
+    expect(secondPageTitles).not.toEqual(
+      firstPageTitles
+    );
+
+    const previousPage =
+      await secondPage?.previous();
+
+    expect(previousPage).not.toBeNull();
+    expect(previousPage?.getAll()).toHaveLength(2);
+
+    expect(
+      previousPage?.getAll().map(
+        course => course.id
+      )
+    ).toEqual(firstPageIds);
+
+    expect(
+      previousPage?.getAll().map(
+        course => course.attributes.title
+      )
+    ).toEqual(firstPageTitles);
+  });
+
+  it("returns the full Course collection when the page limit exceeds the collection size", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .page(0)
+      .limit(100)
+      .get();
+
+    expect(response.getAll()).toHaveLength(4);
+  });
+
+  it("returns the final partial page of a real Course collection", async () => {
+    const client = createTestClient();
+
+    const firstPage = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .page(0)
+      .limit(3)
+      .get();
+
+    expect(firstPage.getAll()).toHaveLength(3);
+
+    const secondPage = await firstPage.next();
+
+    expect(secondPage).not.toBeNull();
+    expect(secondPage?.getAll()).toHaveLength(1);
+  });
+
+  it("returns an empty collection when paginating beyond the end", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .page(10)
+      .limit(2)
+      .get();
+
+    expect(response.getAll()).toEqual([]);
+    expect(response.length).toBe(0);
+  });
+
+  it("returns null from next() on the final Course page", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .page(1)
+      .limit(3)
+      .get();
+
+    expect(response.getAll()).toHaveLength(1);
+
+    const nextPage = await response.next();
+
+    expect(nextPage).toBeNull();
+  });
+
+  it("returns null from previous() on the first Course page", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .page(0)
+      .limit(3)
+      .get();
+
+    expect(response.getAll()).toHaveLength(3);
+
+    const previousPage =
+      await response.previous();
+
+    expect(previousPage).toBeNull();
+  });
+
+  it("preserves filtering and sorting while paginating through Courses", async () => {
+    const client = createTestClient();
+
+    const firstPage = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_credits",
+        ">=",
+        3
+      )
+      .sort("title")
+      .page(0)
+      .limit(2)
+      .get();
+
+    expect(firstPage.getAll()).toHaveLength(2);
+
+    expect(
+      firstPage
+        .getAll()
+        .map(course => course.attributes.field_credits)
+    ).toEqual([3, 3]);
+
+    const firstPageTitles = firstPage
+      .getAll()
+      .map(course => course.attributes.title);
+
+    const secondPage = await firstPage.next();
+
+    expect(secondPage).not.toBeNull();
+    expect(secondPage?.getAll()).toHaveLength(2);
+
+    const secondPageTitles = secondPage
+      ?.getAll()
+      .map(course => course.attributes.title);
+
+    expect(secondPageTitles).not.toEqual(
+      firstPageTitles
+    );
+
+    expect(
+      secondPage?.getAll().every(
+        course =>
+          course.attributes.field_credits >= 3
+      )
+    ).toBe(true);
+
+    expect(
+      secondPageTitles
+    ).toEqual([
+      "Discrete Mathematics",
+      "Introduction to Computer Science"
+    ]);
+  });
 });
+

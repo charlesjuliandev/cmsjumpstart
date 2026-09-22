@@ -15,15 +15,15 @@ const consumerId = process.env.CONSUMERUUID;
 const apiKey = process.env.UP_API_KEY;
 
 type DepartmentAttributes = {
-  name: string;
+  title: string;
 };
 
 type PersonAttributes = {
-  name: string;
+  title: string;
 };
 
 type LocationAttributes = {
-  name: string;
+  title: string;
 };
 
 type CourseAttributes = {
@@ -166,6 +166,249 @@ describe("Drupal Course query stress integration", () => {
       .get();
 
     expect(response.length).toBe(0);
+  });
+
+  it("filters real Courses using not-equal comparison", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_course_code",
+        "<>",
+        "CS 101"
+      )
+      .get();
+
+    const courses = response.getAll();
+
+    expect(courses).toHaveLength(3);
+    expect(
+      courses.some(
+        course =>
+          course.attributes.field_course_code ===
+          "CS 101"
+      )
+    ).toBe(false);
+  });
+
+  it("filters real Courses using a less-than-or-equal comparison", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_credits",
+        "<=",
+        3
+      )
+      .get();
+
+    expect(response.length).toBe(4);
+  });
+
+  it("filters real Courses using CONTAINS", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "title",
+        "CONTAINS",
+        "Data"
+      )
+      .get();
+
+    const courses = response.getAll();
+
+    expect(courses).toHaveLength(1);
+    expect(courses[0]?.attributes.title).toBe(
+      "Data Structures"
+    );
+  });
+
+  it("filters real Courses using ENDS_WITH", async () => {
+    const client = createTestClient();
+
+    const response = await client
+        .resource<CourseAttributes>("node--course")
+        .filter(
+        "field_course_code",
+        "ENDS_WITH",
+        "101"
+        )
+        .get();
+
+    const courses = response.getAll();
+
+    expect(courses).toHaveLength(1);
+
+    expect(
+        courses[0].attributes.field_course_code
+    ).toBe("CS 101");
+  });
+
+  it("filters real Courses using IN", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_course_code",
+        "IN",
+        ["CS 101", "CS 301"]
+      )
+      .get();
+
+    const courses = response.getAll();
+
+    expect(courses).toHaveLength(2);
+
+    expect(
+      courses.map(
+        course =>
+          course.attributes.field_course_code
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        "CS 101",
+        "CS 301"
+      ])
+    );
+  });
+
+  it("filters real Courses using NOT IN", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_course_code",
+        "NOT IN",
+        ["CS 101", "CS 301"]
+      )
+      .get();
+
+    const courses = response.getAll();
+
+    expect(courses).toHaveLength(2);
+
+    expect(
+      courses.map(
+        course =>
+          course.attributes.field_course_code
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        "CS 201",
+        "MATH 201"
+      ])
+    );
+  });
+
+  it("filters real Courses using BETWEEN", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_credits",
+        "BETWEEN",
+        [3, 3]
+      )
+      .get();
+
+    expect(response.length).toBe(4);
+  });
+
+  it("filters real Courses using NOT BETWEEN", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_credits",
+        "NOT BETWEEN",
+        [4, 5]
+      )
+      .get();
+
+    expect(response.length).toBe(4);
+  });
+
+  it("filters real Courses using IS NOT NULL", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_end_time",
+        "IS NOT NULL"
+      )
+      .get();
+
+    expect(response.length).toBe(4);
+  });
+
+  it("filters real Courses using IS NULL", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_end_time",
+        "IS NULL"
+      )
+      .get();
+
+    expect(response.length).toBe(0);
+  });
+
+  it("combines multiple filters against the same field", async () => {
+    const client = createTestClient();
+
+    const response = await client
+      .resource<CourseAttributes>(
+        "node--course"
+      )
+      .filter(
+        "field_credits",
+        ">=",
+        3
+      )
+      .filter(
+        "field_credits",
+        "<=",
+        3
+      )
+      .get();
+
+    expect(response.length).toBe(4);
+
+    expect(
+      response.getAll().every(
+        course =>
+          course.attributes.field_credits === 3
+      )
+    ).toBe(true);
   });
 
   it("combines multiple filters against real Course data", async () => {
@@ -423,5 +666,95 @@ describe("Drupal Course query stress integration", () => {
         )
       ).not.toBeNull();
     }
+  });
+
+  it("rejects an invalid IN filter value", () => {
+    const client = createTestClient();
+
+    expect(() =>
+      client
+        .resource<CourseAttributes>(
+          "node--course"
+        )
+        .filter(
+          "field_course_code",
+          "IN",
+          "CS 101"
+        )
+    ).toThrow(
+      'Filter "IN" requires an array value.'
+    );
+  });
+
+  it("rejects an empty IN filter value", () => {
+    const client = createTestClient();
+
+    expect(() =>
+      client
+        .resource<CourseAttributes>(
+          "node--course"
+        )
+        .filter(
+          "field_course_code",
+          "IN",
+          []
+        )
+    ).toThrow(
+      'Filter "IN" requires at least one value.'
+    );
+  });
+
+  it("rejects an invalid BETWEEN filter value", () => {
+    const client = createTestClient();
+
+    expect(() =>
+      client
+        .resource<CourseAttributes>(
+          "node--course"
+        )
+        .filter(
+          "field_credits",
+          "BETWEEN",
+          3
+        )
+    ).toThrow(
+      'Filter "BETWEEN" requires an array value.'
+    );
+  });
+
+  it("rejects a BETWEEN filter with the wrong number of values", () => {
+    const client = createTestClient();
+
+    expect(() =>
+      client
+        .resource<CourseAttributes>(
+          "node--course"
+        )
+        .filter(
+          "field_credits",
+          "BETWEEN",
+          [2, 3, 4]
+        )
+    ).toThrow(
+      'Filter "BETWEEN" requires exactly two values.'
+    );
+  });
+
+  it("rejects an empty BETWEEN filter value", () => {
+    const client = createTestClient();
+
+    expect(() =>
+      client
+        .resource<CourseAttributes>(
+          "node--course"
+        )
+        .filter(
+          "field_credits",
+          "BETWEEN",
+          []
+        )
+    ).toThrow(
+      'Filter "BETWEEN" requires at least one value.'
+    );
   });
 });
