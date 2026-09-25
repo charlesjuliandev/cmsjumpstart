@@ -27,7 +27,6 @@ vi.mock(
 import {
   createRevalidationHandler
 } from "./createRevalidationHandler";
-import ts from "typescript";
 
 const secret =
   "test-webhook-secret";
