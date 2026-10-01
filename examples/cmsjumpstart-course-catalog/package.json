@@ -1,8 +1,8 @@
 {
-  "name": "@cmsjumpstart/example-next-app",
+  "name": "@cmsjumpstart/example-cmsjumpstart-course-catalog",
   "version": "0.1.0",
   "private": true,
-  "description": "Next.js example using CMSJumpstart",
+  "description": "A production-oriented Next.js example powered by Drupal JSON:API and CMSJumpstart.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

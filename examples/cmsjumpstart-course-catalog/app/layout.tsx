@@ -6,10 +6,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title:
-    "CMSJumpstart Next.js Example",
+    "CMSJumpstart Course Catalog",
 
   description:
-    "Next.js example using CMSJumpstart"
+    "A Next.js example using CMSJumpstart to deliver typed Drupal Course content through JSON:API."
 };
 
 export default function RootLayout({
@@ -25,4 +25,3 @@ export default function RootLayout({
     </html>
   );
 }
-

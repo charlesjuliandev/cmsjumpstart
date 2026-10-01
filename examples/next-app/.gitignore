@@ -1,8 +1,0 @@
-node_modules
-dist
-.pnpm-store
-.env
-.env.*
-!.env.example
-.next
-.DS_Store

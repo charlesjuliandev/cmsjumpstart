@@ -1,252 +1,238 @@
-# CMSJumpstart
+The repository includes a working Next.js Course Catalog example:
 
-Production-ready starters for building modern web applications with headless CMS platforms.
-
-CMSJumpstart provides reusable TypeScript packages for connecting applications to headless CMS platforms while keeping CMS-specific networking, querying, authentication, and response handling out of application code.
-
-## Vision
-
-CMSJumpstart helps developers build modern web applications with Next.js and headless CMS platforms without starting from scratch.
-
-The project focuses on:
-
-* Type-safe CMS data access
-* Predictable query construction
-* Framework-friendly integrations
-* Production-oriented defaults
-* Accessibility-conscious application starters
-* Extensible architecture for additional CMS platforms
-
-## Current Status
-
-🚧 **Early development**
-
-The core Drupal and Next.js integration is actively being developed.
-
-The repository currently includes working packages for:
-
-* CMS configuration
-* Drupal JSON:API querying
-* Drupal authentication and request execution
-* Drupal resource and response handling
-* Next.js integration
-* A production-oriented Next.js example application
-
-APIs may continue to evolve before the first stable release.
-
-## Packages
-
-### `@cmsjumpstart/core`
-
-Shared CMS configuration and foundational functionality.
-
-### `@cmsjumpstart/drupal`
-
-Drupal JSON:API integration including:
-
-* Drupal client
-* Resource queries
-* Query serialization
-* Authentication
-* Request execution
-* JSON:API response handling
-* Relationship and included-resource handling
-
-### `@cmsjumpstart/next`
-
-Next.js integration for CMSJumpstart.
-
-The package provides a thin Next.js-oriented layer around the CMSJumpstart Drupal client, including support for Next.js request and caching behavior.
-
-### `@cmsjumpstart/ui`
-
-Planned shared UI components and application patterns.
-
-### CLI
-
-A CMSJumpstart project creation CLI is planned for a future release.
-
-## Requirements
-
-* Node.js 22+
-* pnpm 11+
-
-## Quick Start
-
-Clone the repository and install dependencies:
-
-```bash
-pnpm install
-```
-
-The repository includes a working Next.js example application:
-
-```bash
-cd examples/next-app
-```
+cd examples/cmsjumpstart-course-catalog
 
 Create a local environment file:
 
-```bash
 cp .env.example .env.local
-```
 
-Configure the required Drupal environment variables:
+Configure the required environment variables with a reachable Drupal installation and valid credentials.
 
-```env
+Important
+
+The Course Catalog example fetches live Drupal content while Next.js builds the application.
+
+You must provide a reachable Drupal JSON:API endpoint and valid authentication credentials before running:
+
+pnpm build
+
+Using placeholder values such as https://your-drupal-site.example will cause the build to fail because the example attempts to retrieve real Drupal content during prerendering.
+
+Start the development server:
+
+pnpm dev
+
+The example application will start on:
+
+http://localhost:3000
+Environment Variables
+
+The Course Catalog example requires the following environment variables:
+
+Variable	Purpose
+DRUPAL_BASE_URL	Base URL of the Drupal installation
+HTAUTH_U	HTTP Basic Authentication username
+HTAUTH_P	HTTP Basic Authentication password
+CONSUMERUUID	API gateway consumer identifier
+UP_API_KEY	API gateway key
+CMSJUMPSTART_REVALIDATION_SECRET	Secret used by the revalidation endpoint
+CMSJUMPSTART_PREVIEW_SECRET	Secret used by the preview endpoint
+
+Example:
+
 DRUPAL_BASE_URL=https://your-drupal-site.example
 HTAUTH_U=your-username
 HTAUTH_P=your-password
 CONSUMERUUID=your-consumer-id
 UP_API_KEY=your-api-key
-```
+CMSJUMPSTART_REVALIDATION_SECRET=your-revalidation-secret
+CMSJUMPSTART_PREVIEW_SECRET=your-preview-secret
 
-Start the development server:
+Authentication values and application secrets should never be committed to the repository.
 
-```bash
-pnpm dev
-```
+The repository's .gitignore excludes local environment files while allowing .env.example to be committed.
 
-The example application will start on `http://localhost:3000` and use the Drupal JSON:API endpoint configured through your environment variables.
+Drupal Requirements
 
-## Environment Variables
+The Course Catalog example expects a Drupal installation with JSON:API enabled.
 
-The Next.js example requires the following environment variables:
+The example currently retrieves Drupal course nodes through:
 
-| Variable          | Purpose                             |
-| ----------------- | ----------------------------------- |
-| `DRUPAL_BASE_URL` | Base URL of the Drupal installation |
-| `HTAUTH_U`        | HTTP Basic Authentication username  |
-| `HTAUTH_P`        | HTTP Basic Authentication password  |
-| `CONSUMERUUID`    | API gateway consumer identifier     |
-| `UP_API_KEY`      | API gateway key                     |
+/jsonapi/node/course
 
-Authentication values are supplied through environment variables and should not be committed to the repository.
+CMSJumpstart represents this resource as:
 
-The example intentionally fails with a clear configuration error when required environment variables are missing rather than silently falling back to an invalid or placeholder Drupal URL.
+node--course
+Course Fields
 
-## Drupal Requirements
+The example uses the following Drupal fields:
 
-The Next.js example expects a Drupal installation with JSON:API enabled.
-
-The example currently retrieves Drupal `page` nodes through:
-
-```text
-/jsonapi/node/page
-```
-
-The CMSJumpstart Drupal integration represents this resource as:
-
-```text
-node--page
-```
-
-The example requests the following fields:
-
-```text
 title
-body
-```
+field_course_code
+field_credits
+field_meeting_days
+field_start_time
+field_end_time
+field_description
+field_department
+field_instructor
+field_location
+field_prerequisites
 
-and retrieves the five most recently created pages.
+The example also uses the following relationships:
 
-Your Drupal installation must therefore expose the corresponding JSON:API resource and fields.
+field_department — to-one relationship
+field_instructor — to-one relationship
+field_location — to-one relationship
+field_prerequisites — to-many relationship
 
-### Authentication
+The example demonstrates how CMSJumpstart can retrieve Drupal resources together with included relationship resources and expose those relationships through typed application code.
 
-The example supports the authentication headers required by the configured Drupal API gateway.
+Authentication
 
 The current example uses:
 
-* HTTP Basic Authentication
-* `X-Consumer-ID`
-* `api-key`
+HTTP Basic Authentication
+X-Consumer-ID
+api-key
 
-The Drupal integration also supports configurable authentication and custom headers for other API architectures.
+These values are supplied through environment variables.
 
-## Development
+The Drupal package also supports other authentication configurations and custom request headers.
 
-From the repository root:
+Course Catalog Example
 
-```bash
-pnpm install
-```
+The Course Catalog demonstrates the complete CMSJumpstart request flow:
 
-Run the test suite:
+Drupal
+   |
+   | Drupal JSON:API
+   v
+CMSJumpstart
+   |
+   | Typed Drupal resource
+   | Relationships
+   | Included resources
+   | Query builder
+   v
+Next.js
+   |
+   v
+Course Catalog
 
-```bash
-pnpm test
-```
+The example includes:
 
-Build all packages:
+A Drupal-backed course listing
+Typed course attributes
+Typed relationship definitions
+Department, instructor, and location relationships
+Course prerequisites
+Individual course detail pages
+Drupal JSON:API field selection
+Included relationship resources
+Sorting
+Result limits
+Next.js caching
+Preview mode using Drupal working-copy content
+Revalidation support
+Error handling
+Loading states
+Accessible semantic HTML
+React Aria Components for interactive client-side UI
+Course Listing
 
-```bash
-pnpm build
-```
+The course listing demonstrates a query similar to:
 
-Run the Next.js example:
+const response = await client
+  .resource("node--course")
+  .fields(
+    "title",
+    "field_course_code",
+    "field_credits",
+    "field_meeting_days",
+    "field_start_time",
+    "field_end_time",
+    "field_department",
+    "field_instructor",
+    "field_location"
+  )
+  .include(
+    "field_department",
+    "field_instructor",
+    "field_location"
+  )
+  .sort("field_course_code")
+  .limit(5)
+  .get();
 
-```bash
-cd examples/next-app
-pnpm dev
-```
+The resulting resources can then be consumed through typed CMSJumpstart response objects rather than manually parsing the raw JSON:API response.
 
-Run the Next.js example typecheck:
+Course Details
 
-```bash
-pnpm typecheck
-```
+Individual courses are available through:
 
-Build the Next.js example for production:
+/courses/[id]
 
-```bash
-pnpm build
-```
+The course detail page demonstrates:
 
-Start the production build:
+Typed resource attributes
+Included relationship resources
+To-many prerequisite relationships
+Course descriptions
+Preview mode
+Next.js loading states
+Not-found handling
 
-```bash
-pnpm start
-```
+Prerequisites are represented as linked course resources, allowing the example to demonstrate relationships between Drupal content entities.
 
-## Testing and Validation
+Preview Mode
 
-Before considering a change complete, validate the repository with:
+The example includes a preview endpoint:
 
-```bash
-pnpm test
-pnpm build
-```
+/preview
 
-Then validate the Next.js example:
+The endpoint enables Next.js draft mode using the configured:
 
-```bash
-cd examples/next-app
-pnpm typecheck
-pnpm build
-```
+CMSJUMPSTART_PREVIEW_SECRET
 
-For changes affecting the example application, also run:
+Preview requests use Drupal's working-copy resource version:
 
-```bash
-pnpm dev
-```
+rel:working-copy
 
-and verify the application in a browser at:
+This allows the example to retrieve unpublished or working-copy Drupal content when preview mode is enabled.
 
-```text
-http://localhost:3000
-```
+The preview implementation is intentionally small and is designed to demonstrate how CMSJumpstart can integrate with Next.js draft mode.
 
-The example should successfully load Drupal content when the required environment variables and Drupal API configuration are available.
+Revalidation
 
-## Architecture
+The example also includes a revalidation endpoint:
+
+/api/revalidate
+
+The endpoint uses:
+
+CMSJUMPSTART_REVALIDATION_SECRET
+
+to authenticate revalidation requests.
+
+CMSJumpstart generates resource cache tags based on Drupal resource types and resource IDs. These tags can be invalidated when Drupal content changes.
+
+For example, a course collection can use:
+
+cmsjumpstart:drupal:node--course
+
+while an individual course can use:
+
+cmsjumpstart:drupal:node--course:<id>
+
+This allows Next.js cache invalidation to target Drupal resources without requiring application code to manually manage individual cache entries.
+
+Architecture
 
 CMSJumpstart separates CMS querying from request execution and framework integration.
 
 The current high-level architecture is:
 
-```text
 Next.js Application
         |
         v
@@ -272,150 +258,271 @@ RequestExecutor
         |
         v
 Drupal JSON:API
-```
 
-The Next.js integration remains intentionally thin. Drupal-specific behavior stays in the Drupal package rather than being duplicated inside the Next.js integration.
+The Next.js integration remains intentionally thin.
 
-The Next.js integration extends the Drupal request pipeline with Next.js-specific request behavior while continuing to use the Drupal package for CMS communication.
+Drupal-specific behavior stays in the Drupal package rather than being duplicated inside the Next.js integration.
 
-## Querying Drupal
+The Next.js integration adds framework-specific request and caching behavior while continuing to use the Drupal package for CMS communication.
+
+Querying Drupal
 
 A basic Drupal resource query looks like:
 
-```ts
-const pages = await client
-  .resource("node--page")
-  .fields("title", "body")
-  .sort("-created")
+const courses = await client
+  .resource("node--course")
+  .fields(
+    "title",
+    "field_course_code",
+    "field_credits"
+  )
+  .sort("field_course_code")
   .limit(5)
   .get();
-```
 
 Queries support fluent composition for common Drupal JSON:API operations including:
 
-* Field selection
-* Includes
-* Filtering
-* Sorting
-* Pagination
+Field selection
+Sparse fieldsets
+Includes
+Filtering
+Sorting
+Pagination
+Result limits
+Resource versions
 
-Example:
+For example:
 
-```ts
-const pages = await client
-  .resource("node--page")
-  .include("field_image")
-  .filter("status", true)
-  .sort("-created")
+const courses = await client
+  .resource("node--course")
+  .include(
+    "field_department",
+    "field_instructor"
+  )
+  .filter(
+    "field_credits",
+    ">=",
+    3
+  )
+  .sort("field_course_code")
   .limit(10)
   .get();
-```
 
-## Responses
+Supported filter operators include Drupal JSON:API operators such as:
+
+=
+<>
+>
+>=
+<
+<=
+STARTS_WITH
+CONTAINS
+ENDS_WITH
+IN
+NOT IN
+BETWEEN
+NOT BETWEEN
+IS NULL
+IS NOT NULL
+
+The query builder is designed around Drupal JSON:API behavior rather than attempting to provide a generic database query abstraction.
+
+Responses
 
 CMSJumpstart provides typed response and resource abstractions around Drupal JSON:API responses.
 
 Responses support:
 
-* Resource access
-* Included resources
-* Relationship data
-* Typed attributes
-* Pagination
-* Response-oriented navigation
+Individual resources
+Resource collections
+Typed attributes
+Relationship data
+Included resources
+Typed included resources
+Pagination
+Response-oriented navigation
+Raw JSON:API response access
 
-The goal is to allow application code to work with typed CMS content without manually parsing JSON:API responses.
+For example:
 
-## Next.js Example
+const course = response.getOne();
 
-The example application demonstrates a production-oriented integration using:
+const courses = response.getAll();
 
-* Next.js
-* React
-* React Aria Components
-* Tailwind CSS
-* CMSJumpstart
-* Drupal JSON:API
+const department =
+  course?.includedResource(
+    "field_department"
+  );
 
-The example includes:
+const prerequisites =
+  course?.includedResources(
+    "field_prerequisites"
+  );
 
-* Environment validation
-* Typed Drupal data handling
-* Error boundaries
-* Skeleton loading UI
-* Keyboard-accessible interactions
-* Visible keyboard focus states
-* Reduced-motion support
-* Accessible semantic HTML
-* Next.js request handling
+The goal is to allow application code to work with typed CMS content without manually traversing raw JSON:API response structures.
 
-The example is intentionally small so that developers can use it as a starting point rather than having to remove application-specific boilerplate from a larger starter.
+Next.js Integration
 
-## Styling
+The @cmsjumpstart/next package provides Next.js-specific integration around the Drupal package.
 
-The example uses Tailwind CSS for styling.
+It currently includes:
 
-The project uses Tailwind CSS v4 with the official PostCSS integration. No legacy `tailwind.config.js` file is required for the current example configuration.
+createNextCMS
+NextCMSClient
+NextCMSResource
+Next.js request execution
+Next.js cache integration
+Resource cache tags
+Revalidation helpers
+Revalidation route handlers
+Preview route handlers
+
+The integration allows application code to continue using the CMSJumpstart resource/query API while the request layer handles Next.js-specific behavior such as caching and revalidation.
+
+Styling
+
+The Course Catalog example uses Tailwind CSS v4 with the official PostCSS integration.
+
+No legacy tailwind.config.js file is required for the current example configuration.
 
 Custom styling and design tokens can be added through the application's CSS as the example evolves.
 
-## Project Structure
+Development
 
-```text
+From the repository root:
+
+pnpm install
+
+Run the complete test suite:
+
+pnpm test
+
+Build all packages:
+
+pnpm build
+
+Run the Course Catalog example:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog dev
+
+Typecheck the Course Catalog example:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog typecheck
+
+Build the Course Catalog example:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog build
+
+Start the production build:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog start
+Testing and Validation
+
+Before considering a change complete, validate the repository with:
+
+pnpm test
+pnpm build
+
+When changes affect the Course Catalog example, also run:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog typecheck
+
+and:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog build
+
+For changes affecting the example application, run the development server and verify the application in a browser:
+
+pnpm --filter @cmsjumpstart/example-cmsjumpstart-course-catalog dev
+
+Then open:
+
+http://localhost:3000
+
+The example requires a reachable Drupal installation and valid environment variables.
+
+Project Structure
 packages/
   core/
   drupal/
   next/
 
 examples/
-  next-app/
+  cmsjumpstart-course-catalog/
+    app/
+      api/
+        revalidate/
+          route.ts
+      components/
+        CourseList.tsx
+      courses/
+        [id]/
+          page.tsx
+      lib/
+        cms.ts
+        courses.ts
+      preview/
+        route.ts
+      error.tsx
+      globals.css
+      layout.tsx
+      loading.tsx
+      page.tsx
+    .env.example
+    next.config.ts
+    package.json
+    postcss.config.mjs
+    tsconfig.json
 
 rfcs/
-```
 
-## RFCs
+Generated files such as .next, node_modules, next-env.d.ts, and TypeScript build information are intentionally excluded from version control.
 
-Architectural decisions and proposed changes are documented in the `rfcs/` directory.
+RFCs
+
+Architectural decisions and proposed changes are documented in the rfcs/ directory.
 
 RFCs are used to document:
 
-* Architectural decisions
-* Public API design
-* Query behavior
-* Request execution
-* Authentication
-* Future features
+Architectural decisions
+Public API design
+Query behavior
+Request execution
+Authentication
+Future features
 
-Because CMSJumpstart is still under active development, RFCs marked `Proposed` may describe future architecture rather than currently implemented functionality.
+Because CMSJumpstart is still under active development, RFCs marked Proposed may describe future architecture rather than currently implemented functionality.
 
-## Current Limitations
+Current Limitations
 
 CMSJumpstart is still under active development.
 
 The following should be considered before using the project in production:
 
-* Public APIs may change before the first stable release.
-* The current example is focused on Drupal JSON:API.
-* The authentication example reflects the current Drupal API gateway requirements.
-* Advanced request features such as retries, middleware, and logging are not currently part of the request execution API.
-* The project currently provides a focused Next.js integration rather than a complete application framework.
+Public APIs may change before the first stable release.
+The current example is focused on Drupal JSON:API.
+The authentication example reflects the current Drupal API gateway requirements.
+Advanced request features such as retries, middleware, and logging are not currently part of the request execution API.
+The project currently provides a focused Next.js integration rather than a complete application framework.
+The Course Catalog example expects a Drupal environment that exposes the required content types, fields, relationships, and authentication configuration.
 
 These limitations are expected to evolve as the project moves toward its first stable release.
 
-## Contributing
+Contributing
 
-CMSJumpstart is currently in early development.
+CMSJumpstart is currently in active development.
 
 Before contributing significant architectural changes:
 
-1. Review the relevant RFCs.
-2. Review the existing package implementation.
-3. Run the repository test suite.
-4. Run the package build.
-5. Typecheck and build the Next.js example when changes affect it.
+Review the relevant RFCs.
+Review the existing package implementation.
+Run the repository test suite.
+Run the package build.
+Typecheck and build the Course Catalog example when changes affect it.
 
 For larger architectural changes, document the proposed design in an RFC before implementation.
 
-## License
+License
 
 MIT
