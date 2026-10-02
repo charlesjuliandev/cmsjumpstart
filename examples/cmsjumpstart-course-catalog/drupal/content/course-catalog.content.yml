@@ -1,0 +1,246 @@
+# CMSJumpstart Course Catalog fixture.
+#
+# Import with:
+#   ddev drush yaml_content:import \
+#     /path/to/drupal
+#
+# The importer expects the directory containing the content/ directory.
+
+- entity: "node"
+  type: "department"
+  title: "Computer Science"
+  status: 1
+
+- entity: "node"
+  type: "department"
+  title: "Mathematics"
+  status: 1
+
+- entity: "node"
+  type: "department"
+  title: "Biology"
+  status: 1
+
+- entity: "node"
+  type: "person"
+  title: "Dr. Jane Smith"
+  status: 1
+
+- entity: "node"
+  type: "person"
+  title: "Dr. Michael Johnson"
+  status: 1
+
+- entity: "node"
+  type: "person"
+  title: "Dr. Lisa Williams"
+  status: 1
+
+- entity: "node"
+  type: "location"
+  title: "Science Building 101"
+  status: 1
+
+- entity: "node"
+  type: "location"
+  title: "Engineering Hall 204"
+  status: 1
+
+- entity: "node"
+  type: "location"
+  title: "Online"
+  status: 1
+
+- entity: "node"
+  type: "course"
+  title: "Introduction to Computer Science"
+  status: 1
+  field_course_code:
+    - value: "CS 101"
+  field_credits:
+    - value: 3
+  field_date:
+    - value: "2026-08-24T00:00:00"
+      end_value: "2026-12-11T23:59:59"
+  field_department:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "department"
+            title: "Computer Science"
+  field_description:
+    - format: "basic_html"
+      value: "An introduction to computer science covering computational thinking, algorithms, problem solving, programming fundamentals, and the role of computing in modern society."
+  field_end_time:
+    - value: "09:50"
+  field_instructor:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "person"
+            title: "Dr. Jane Smith"
+  field_location:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "location"
+            title: "Engineering Hall 204"
+  field_meeting_days:
+    - value: "Monday"
+    - value: "Wednesday"
+    - value: "Friday"
+  field_start_time:
+    - value: "09:00"
+
+- entity: "node"
+  type: "course"
+  title: "Data Structures"
+  status: 1
+  field_course_code:
+    - value: "CS 201"
+  field_credits:
+    - value: 3
+  field_date:
+    - value: "2026-08-24T00:00:00"
+      end_value: "2026-12-11T23:59:59"
+  field_department:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "department"
+            title: "Computer Science"
+  field_description:
+    - format: "basic_html"
+      value: "Study of fundamental data structures and their applications, including arrays, linked lists, stacks, queues, trees, hash tables, and graphs, with an emphasis on algorithmic efficiency."
+  field_end_time:
+    - value: "11:15"
+  field_instructor:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "person"
+            title: "Dr. Michael Johnson"
+  field_location:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "location"
+            title: "Engineering Hall 204"
+  field_meeting_days:
+    - value: "Tuesday"
+    - value: "Thursday"
+  field_prerequisites:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "course"
+            title: "Introduction to Computer Science"
+  field_start_time:
+    - value: "10:00"
+
+- entity: "node"
+  type: "course"
+  title: "Discrete Mathematics"
+  status: 1
+  field_course_code:
+    - value: "MATH 201"
+  field_credits:
+    - value: 3
+  field_date:
+    - value: "2026-08-24T00:00:00"
+      end_value: "2026-12-11T23:59:59"
+  field_department:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "department"
+            title: "Mathematics"
+  field_description:
+    - format: "basic_html"
+      value: "An introduction to mathematical structures used in computer science, including logic, sets, relations, functions, combinatorics, graph theory, and proof techniques."
+  field_end_time:
+    - value: "14:15"
+  field_instructor:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "person"
+            title: "Dr. Lisa Williams"
+  field_location:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "location"
+            title: "Science Building 101"
+  field_meeting_days:
+    - value: "Tuesday"
+    - value: "Thursday"
+  field_start_time:
+    - value: "13:00"
+
+- entity: "node"
+  type: "course"
+  title: "Algorithms"
+  status: 1
+  field_course_code:
+    - value: "CS 301"
+  field_credits:
+    - value: 3
+  field_date:
+    - value: "2026-08-24T00:00:00"
+      end_value: "2026-12-11T23:59:59"
+  field_department:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "department"
+            title: "Computer Science"
+  field_description:
+    - format: "basic_html"
+      value: "Advanced study of algorithms and algorithm design techniques, including divide and conquer, greedy algorithms, dynamic programming, graph algorithms, and analysis of computational complexity."
+  field_end_time:
+    - value: "15:15"
+  field_instructor:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "person"
+            title: "Dr. Jane Smith"
+  field_location:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "location"
+            title: "Science Building 101"
+  field_meeting_days:
+    - value: "Monday"
+    - value: "Wednesday"
+  field_prerequisites:
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "course"
+            title: "Data Structures"
+    - '#process':
+        callback: "reference"
+        args:
+          - "node"
+          - type: "course"
+            title: "Discrete Mathematics"
+  field_start_time:
+    - value: "14:00"
+

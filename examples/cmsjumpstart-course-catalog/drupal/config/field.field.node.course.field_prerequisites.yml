@@ -1,0 +1,28 @@
+uuid: dfd9e88b-29a2-4a0f-9803-2b78a870f53e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_prerequisites
+    - node.type.course
+id: node.course.field_prerequisites
+field_name: field_prerequisites
+entity_type: node
+bundle: course
+label: Prerequisites
+description: 'Courses that students should complete before taking this course.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:node'
+  handler_settings:
+    target_bundles:
+      course: course
+    sort:
+      field: title
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

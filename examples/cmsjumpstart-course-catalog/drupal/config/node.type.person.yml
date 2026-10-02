@@ -1,0 +1,13 @@
+uuid: befdfcc4-68ff-4bde-a541-2cc07531aedf
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+name: Person
+type: person
+description: 'A person associated with the university.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: false

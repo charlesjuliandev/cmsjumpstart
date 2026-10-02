@@ -1,0 +1,13 @@
+uuid: 6aa4b307-1ecc-4643-aa1c-17d7db51bb76
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+name: Location
+type: location
+description: 'A physical or virtual location where courses meet.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: false

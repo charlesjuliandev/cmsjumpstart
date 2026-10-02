@@ -1,0 +1,19 @@
+uuid: e241e48e-30c6-4dda-8a59-18acc6c6f5fe
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_start_time
+    - node.type.course
+id: node.course.field_start_time
+field_name: field_start_time
+entity_type: node
+bundle: course
+label: 'Start time'
+description: 'The time at which the course begins, using 24-hour HH:MM format.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

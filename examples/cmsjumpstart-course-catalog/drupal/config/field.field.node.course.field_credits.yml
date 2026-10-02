@@ -1,0 +1,25 @@
+uuid: ae7220dd-7f5f-4ebf-bd32-5839c2d9a58f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_credits
+    - node.type.course
+id: node.course.field_credits
+field_name: field_credits
+entity_type: node
+bundle: course
+label: Credits
+description: 'The number of academic credits awarded for completing the course.'
+required: true
+translatable: true
+default_value:
+  -
+    value: 3
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

@@ -1,0 +1,29 @@
+uuid: 367b36d3-34cb-4a6c-a63e-9aecab5c2d66
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_location
+    - node.type.course
+    - node.type.location
+id: node.course.field_location
+field_name: field_location
+entity_type: node
+bundle: course
+label: Location
+description: 'The location where the course meets.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:node'
+  handler_settings:
+    target_bundles:
+      location: location
+    sort:
+      field: title
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

@@ -1,0 +1,13 @@
+uuid: cdd3623d-7005-4ed2-842f-bcdaef511e58
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+name: Department
+type: department
+description: 'An academic department within the university.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: false

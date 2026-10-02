@@ -1,0 +1,13 @@
+uuid: fa207f4d-48c3-4cfd-be1a-d46ec8f45d8e
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+name: Course
+type: course
+description: 'A university course offered during an academic term.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: false

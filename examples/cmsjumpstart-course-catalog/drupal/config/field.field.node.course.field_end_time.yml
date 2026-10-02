@@ -1,0 +1,19 @@
+uuid: a12c091b-52ed-4d79-91f7-f0ad4553b6ce
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_end_time
+    - node.type.course
+id: node.course.field_end_time
+field_name: field_end_time
+entity_type: node
+bundle: course
+label: 'End time'
+description: 'The time at which the course ends, using 24-hour HH:MM format.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
