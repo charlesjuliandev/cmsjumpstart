@@ -676,7 +676,7 @@ const client =
       "X-Consumer-ID":
         process.env.CONSUMERUUID ?? "",
       "api-key":
-        process.env.UP_API_KEY ?? ""
+        process.env.API_KEY ?? ""
     }
   });
 ```

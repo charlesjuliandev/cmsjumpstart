@@ -25,7 +25,7 @@ const consumerId =
   process.env.CONSUMERUUID;
 
 const apiKey =
-  process.env.UP_API_KEY;
+  process.env.API_KEY;
 
 type DepartmentAttributes = {
   title: string;
@@ -91,7 +91,7 @@ describe(
         !apiKey
       ) {
         throw new Error(
-          "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, DRUPAL_PASSWORD, CONSUMERUUID, or UP_API_KEY environment variables."
+          "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, DRUPAL_PASSWORD, CONSUMERUUID, or API_KEY environment variables."
         );
       }
 

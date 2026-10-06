@@ -39,7 +39,7 @@ const consumerUuid =
 
 const apiKey =
   getRequiredEnv(
-    "UP_API_KEY"
+    "API_KEY"
   );
 
 export const cms =

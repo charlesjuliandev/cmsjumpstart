@@ -6,19 +6,27 @@ The repository includes a working Next.js Course Catalog example that demonstrat
 
 ## Quick Start
 
-The repository includes a working Next.js Course Catalog example:
+The repository includes a working Next.js Course Catalog example that demonstrates the complete flow from Drupal content through CMSJumpstart into a Next.js application.
+
+From the repository root, enter the Course Catalog example:
 
 ```bash
 cd examples/cmsjumpstart-course-catalog
 ```
 
-Create a local environment file:
+Create the local environment file from the provided template:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Configure the required environment variables with a reachable Drupal installation and valid credentials.
+The `.env.local` file belongs inside the Course Catalog example directory:
+
+```text
+examples/cmsjumpstart-course-catalog/.env.local
+```
+
+Configure the required environment variables with a reachable Drupal installation, valid authentication credentials, and the required application secrets.
 
 > **Important**
 >
@@ -32,32 +40,83 @@ Configure the required environment variables with a reachable Drupal installatio
 >
 > Using placeholder values such as `https://your-drupal-site.example` will cause the build to fail because the example attempts to retrieve real Drupal content during prerendering.
 
-### Drupal Course Catalog Fixture
+Once the environment is configured, you can start the example with:
 
-The Course Catalog example requires Drupal content that matches the resource types, fields, and relationships used by the example.
-
-A portable Drupal fixture is included with the repository:
-
-```text
-examples/cmsjumpstart-course-catalog/drupal/
-├── config/
-└── content/
-    └── course-catalog.content.yml
+```bash
+pnpm dev
 ```
 
-The fixture contains:
+The example application will start on:
 
-* Four Drupal content types: `course`, `department`, `location`, and `person`
-* The Course Catalog field storage and field configuration
-* Sample departments, instructors, locations, and courses
-* Course-to-department relationships
-* Course-to-instructor relationships
-* Course-to-location relationships
-* Course prerequisite relationships
+http://localhost:3000
 
-**The Drupal fixture must be installed/imported before running the Next.js Course Catalog example unless your Drupal installation already provides equivalent configuration and content.**
+## Set Up a Fresh Drupal Site
 
-The fixture requires Drupal with the following modules available:
+The Course Catalog example includes a portable Drupal fixture that provides the content types, fields, relationships, and sample content used by the Next.js example.
+
+If you do not already have a Drupal site, you can create a fresh Drupal 10 site for the example.
+
+### 1. Create a Drupal 10 site
+
+The following example uses DDEV. Make sure [DDEV](https://ddev.readthedocs.io/) and Docker are installed first.
+
+Create a new directory and configure DDEV:
+
+```bash
+mkdir cmsjumpstart-drupal-test
+cd cmsjumpstart-drupal-test
+
+ddev config \
+  --project-type=drupal10 \
+  --docroot=web \
+  --project-name=cmsjumpstart-drupal-test
+```
+
+Start the site:
+
+```bash
+ddev start
+```
+
+Install Drupal:
+
+```bash
+ddev composer create-project "drupal/recommended-project:10.6.18" .
+```
+
+Install Drush:
+
+```bash
+ddev composer require drush/drush
+```
+
+Verify the installation:
+
+```bash
+ddev drush status
+```
+
+Complete the Drupal installation through the Drupal installer.
+
+### 2. Enable the required Drupal modules
+
+The Course Catalog fixture requires Drupal's Datetime Range field type, so the `datetime_range` module **must be enabled before importing the fixture configuration**.
+
+Enable the required modules:
+
+```bash
+ddev drush en datetime_range jsonapi basic_auth -y
+```
+
+The fixture also requires the YAML Content module for importing the sample content. If YAML Content is not already available in your Drupal installation, install or enable it according to the version of the YAML Content module you are using.
+
+Verify that the required modules are enabled:
+
+```bash
+ddev drush pml --status=enabled
+```
+
+The fixture requires:
 
 * Node
 * Text
@@ -68,25 +127,65 @@ The fixture requires Drupal with the following modules available:
 
 `jsonapi_extras` is not required by the fixture.
 
-#### 1. Make the fixture available to Drupal
+At this point, Drupal is ready for the Course Catalog fixture.
 
-The `drupal/` directory is part of the CMSJumpstart repository, while your Drupal application may live in a separate repository.
+## Drupal Course Catalog Fixture
 
-Copy or otherwise make the fixture available inside your Drupal project/container. For example, with a DDEV-based Drupal project:
+The Course Catalog example requires Drupal content that matches the resource types, fields, and relationships used by the example.
 
-```bash
-mkdir -p .cmsjumpstart-fixture/config .cmsjumpstart-fixture/content
+A portable Drupal fixture is included with the repository:
 
-cp /path/to/cmsjumpstart/examples/cmsjumpstart-course-catalog/drupal/config/*.yml \
-  .cmsjumpstart-fixture/config/
+```text
+examples/cmsjumpstart-course-catalog/drupal/
 
-cp /path/to/cmsjumpstart/examples/cmsjumpstart-course-catalog/drupal/content/course-catalog.content.yml \
-  .cmsjumpstart-fixture/content/
+├── config/
+└── content/
+    └── course-catalog.content.yml
 ```
 
-The exact location can differ depending on how your Drupal project is organized. The important requirement is that Drupal can access the fixture files from inside its environment.
+The fixture contains:
 
-#### 2. Import the Drupal configuration
+* Four Drupal content types: `course`, `department`, `location`, and `person`
+* Course field storage and field configuration
+* Sample departments, instructors, locations, and courses
+* Course-to-department relationships
+* Course-to-instructor relationships
+* Course-to-location relationships
+* Course prerequisite relationships
+
+**The Drupal fixture must be installed/imported before running the Next.js Course Catalog example unless your Drupal installation already provides equivalent configuration and content.**
+
+### 1. Make the fixture available to Drupal
+
+The `drupal/` directory is part of the CMSJumpstart repository, while your Drupal application may live in a separate directory or repository.
+
+If your CMSJumpstart and Drupal projects are next to each other, you can copy the fixture into your Drupal project with:
+
+```bash
+cp -R ../cmsjumpstart/examples/cmsjumpstart-course-catalog/drupal .cmsjumpstart-fixture
+```
+
+For example:
+
+```text
+~/Sites/
+├── cmsjumpstart/
+└── cmsjumpstart-drupal-test/
+```
+
+If your projects are located elsewhere, replace the source path with the path to your CMSJumpstart checkout.
+
+After copying, the Drupal project should contain:
+
+```text
+.cmsjumpstart-fixture/
+├── config/
+│   ├── ...
+└── content/
+    └── course-catalog.content.yml
+```
+
+### 2. Import the Drupal configuration
 
 The fixture contains 26 Drupal configuration files.
 
@@ -96,10 +195,10 @@ Import them as a partial configuration set so that configuration not included in
 ddev drush config:import \
   --partial \
   --source=/var/www/html/.cmsjumpstart-fixture/config \
-  -y
+  --diff
 ```
 
-If your Drupal environment uses a different container path, replace the `--source` path with the path where you made the fixture configuration available.
+> **Important:** The `datetime_range` module must be enabled before running this command. Otherwise Drupal cannot import the `field_date` configuration used by the Course content type.
 
 The configuration includes:
 
@@ -113,7 +212,7 @@ The configuration includes:
 * Course date and time fields
 * Course meeting-day configuration
 
-#### 3. Import the sample content
+### 3. Import the sample content
 
 The YAML Content importer expects the directory containing the `content/` directory, rather than the `content/` directory itself.
 
@@ -133,7 +232,14 @@ The fixture uses entity references based on entity properties such as content ty
 
 Do not use `--create-new` for the normal fixture setup unless you intentionally want to create additional copies of existing fixture content.
 
-#### 4. Verify Drupal JSON:API
+After the import, the Course Catalog fixture should contain:
+
+* 4 courses
+* 3 departments
+* 3 locations
+* 3 people
+
+### 4. Verify Drupal JSON:API
 
 After the configuration and content have been imported, verify that Drupal exposes the course resource:
 
@@ -147,7 +253,16 @@ The Course Catalog example expects the Drupal resource type:
 node--course
 ```
 
-Your Drupal installation must also provide the authentication headers and credentials described in the [Authentication](#authentication) section.
+You can verify the endpoint directly with:
+
+```bash
+curl -k "https://YOUR-DRUPAL-DOMAIN/jsonapi/node/course"
+```
+
+For an authenticated Drupal installation, use the credentials and headers described in the [Authentication](#authentication) section.
+
+At this point, Drupal is ready to provide the Course Catalog data to the CMSJumpstart Next.js example.
+
 
 #### 5. Configure the Next.js example
 
@@ -157,7 +272,7 @@ Return to the Course Catalog example:
 cd examples/cmsjumpstart-course-catalog
 ```
 
-Create the environment file if you have not already done so:
+If you have not already created the environment file, create it from the example template:
 
 ```bash
 cp .env.example .env.local
@@ -183,7 +298,7 @@ The Course Catalog example requires the following environment variables:
 | `DRUPAL_USERNAME`                         | HTTP Basic Authentication username       |
 | `DRUPAL_PASSWORD`                         | HTTP Basic Authentication password       |
 | `CONSUMERUUID`                     | API gateway consumer identifier          |
-| `UP_API_KEY`                       | API gateway key                          |
+| `API_KEY`                       | API gateway key                          |
 | `CMSJUMPSTART_REVALIDATION_SECRET` | Secret used by the revalidation endpoint |
 | `CMSJUMPSTART_PREVIEW_SECRET`      | Secret used by the preview endpoint      |
 
@@ -194,7 +309,7 @@ DRUPAL_BASE_URL=https://your-drupal-site.example
 DRUPAL_USERNAME=your-username
 DRUPAL_PASSWORD=your-password
 CONSUMERUUID=your-consumer-id
-UP_API_KEY=your-api-key
+API_KEY=your-api-key
 CMSJUMPSTART_REVALIDATION_SECRET=your-revalidation-secret
 CMSJUMPSTART_PREVIEW_SECRET=your-preview-secret
 ```
