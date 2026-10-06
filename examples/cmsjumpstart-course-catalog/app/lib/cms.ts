@@ -24,12 +24,12 @@ const drupalBaseUrl =
 
 const htauthUsername =
   getRequiredEnv(
-    "HTAUTH_U"
+    "DRUPAL_USERNAME"
   );
 
 const htauthPassword =
   getRequiredEnv(
-    "HTAUTH_P"
+    "DRUPAL_PASSWORD"
   );
 
 const consumerUuid =

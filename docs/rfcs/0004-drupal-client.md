@@ -667,9 +667,9 @@ const client =
     auth: {
       type: "basic",
       username:
-        process.env.HTAUTH_U ?? "",
+        process.env.DRUPAL_USERNAME ?? "",
       password:
-        process.env.HTAUTH_P ?? ""
+        process.env.DRUPAL_PASSWORD ?? ""
     },
 
     headers: {

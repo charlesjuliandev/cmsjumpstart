@@ -180,8 +180,8 @@ The Course Catalog example requires the following environment variables:
 | Variable                           | Purpose                                  |
 | ---------------------------------- | ---------------------------------------- |
 | `DRUPAL_BASE_URL`                  | Base URL of the Drupal installation      |
-| `HTAUTH_U`                         | HTTP Basic Authentication username       |
-| `HTAUTH_P`                         | HTTP Basic Authentication password       |
+| `DRUPAL_USERNAME`                         | HTTP Basic Authentication username       |
+| `DRUPAL_PASSWORD`                         | HTTP Basic Authentication password       |
 | `CONSUMERUUID`                     | API gateway consumer identifier          |
 | `UP_API_KEY`                       | API gateway key                          |
 | `CMSJUMPSTART_REVALIDATION_SECRET` | Secret used by the revalidation endpoint |
@@ -191,8 +191,8 @@ Example:
 
 ```dotenv
 DRUPAL_BASE_URL=https://your-drupal-site.example
-HTAUTH_U=your-username
-HTAUTH_P=your-password
+DRUPAL_USERNAME=your-username
+DRUPAL_PASSWORD=your-password
 CONSUMERUUID=your-consumer-id
 UP_API_KEY=your-api-key
 CMSJUMPSTART_REVALIDATION_SECRET=your-revalidation-secret

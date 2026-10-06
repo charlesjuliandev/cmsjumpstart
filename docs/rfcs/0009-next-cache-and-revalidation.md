@@ -659,8 +659,8 @@ Existing CMS authentication remains server-side.
 The example application currently uses:
 
 ```text
-HTAUTH_U
-HTAUTH_P
+DRUPAL_USERNAME
+DRUPAL_PASSWORD
 X-Consumer-ID
 api-key
 ```

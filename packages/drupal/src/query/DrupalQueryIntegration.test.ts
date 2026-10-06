@@ -8,9 +8,9 @@ loadEnvFile(".env.local");
 
 const drupalUrl = process.env.DRUPAL_BASE_URL;
 const httpAuthUsername =
-  process.env.HTAUTH_U;
+  process.env.DRUPAL_USERNAME;
 const httpAuthPassword =
-  process.env.HTAUTH_P;
+  process.env.DRUPAL_PASSWORD;
 const consumerId =
   process.env.CONSUMERUUID;
 const apiKey =
@@ -26,7 +26,7 @@ describe("Drupal JSON:API integration", () => {
       !apiKey
     ) {
       throw new Error(
-        "Missing DRUPAL_BASE_URL, HTAUTH_U, HTAUTH_P, CONSUMERUUID, or UP_API_KEY environment variables."
+        "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, DRUPAL_PASSWORD, CONSUMERUUID, or UP_API_KEY environment variables."
       );
     }
 
