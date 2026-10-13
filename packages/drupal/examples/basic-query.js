@@ -14,7 +14,7 @@ var client = new DrupalClient_1.DrupalClient({
     },
     headers: {
         "X-Consumer-ID": process.env.DRUPAL_CONSUMER_ID,
-        "api-key": process.env.DRUPAL_API_KEY
+        "api-key": process.env.API_KEY
     }
 });
 var response = await client

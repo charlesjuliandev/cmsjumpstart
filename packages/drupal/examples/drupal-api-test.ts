@@ -4,7 +4,7 @@ const client = new DrupalClient({
   baseUrl: process.env.DRUPAL_BASE_URL ?? "",
   auth: {
     type: "api-key",
-    key: process.env.DRUPAL_API_KEY ?? ""
+    key: process.env.API_KEY ?? ""
   }
 });
 

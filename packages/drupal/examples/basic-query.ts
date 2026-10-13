@@ -27,7 +27,7 @@ const client =
         process.env.DRUPAL_CONSUMER_ID!,
 
       "api-key":
-        process.env.DRUPAL_API_KEY!
+        process.env.API_KEY!
     }
   });
 
