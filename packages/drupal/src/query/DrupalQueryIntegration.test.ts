@@ -1,3 +1,4 @@
+
 import { loadEnvFile } from "node:process";
 import { describe, expect, it } from "vitest";
 import { DrupalClient } from "../client/DrupalClient";
@@ -7,27 +8,35 @@ import { DrupalQuerySerializer } from "./DrupalQuerySerializer";
 loadEnvFile(".env.local");
 
 const drupalUrl = process.env.DRUPAL_BASE_URL;
-const httpAuthUsername =
-  process.env.DRUPAL_USERNAME;
-const httpAuthPassword =
-  process.env.DRUPAL_PASSWORD;
-const consumerId =
-  process.env.CONSUMERUUID;
-const apiKey =
-  process.env.API_KEY;
+const httpAuthUsername = process.env.DRUPAL_USERNAME;
+const httpAuthPassword = process.env.DRUPAL_PASSWORD;
+const consumerId = process.env.CONSUMERUUID;
+const apiKey = process.env.API_KEY;
+
+interface CourseAttributes {
+  title: string;
+  field_date: {
+    value: string;
+    end_value: string;
+  };
+}
 
 describe("Drupal JSON:API integration", () => {
   const createTestClient = () => {
-    if (
-      !drupalUrl ||
-      !httpAuthUsername ||
-      !httpAuthPassword ||
-      !consumerId ||
-      !apiKey
-    ) {
+    if (!drupalUrl || !httpAuthUsername || !httpAuthPassword) {
       throw new Error(
-        "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, DRUPAL_PASSWORD, CONSUMERUUID, or API_KEY environment variables."
+        "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, or DRUPAL_PASSWORD environment variables."
       );
+    }
+
+    const headers: Record<string, string> = {};
+
+    if (consumerId) {
+      headers["X-Consumer-ID"] = consumerId;
+    }
+
+    if (apiKey) {
+      headers["api-key"] = apiKey;
     }
 
     return new DrupalClient({
@@ -37,141 +46,90 @@ describe("Drupal JSON:API integration", () => {
         username: httpAuthUsername,
         password: httpAuthPassword
       },
-      headers: {
-        "X-Consumer-ID": consumerId,
-        "api-key": apiKey
-      }
+      ...(Object.keys(headers).length > 0 ? { headers } : {})
     });
   };
 
-  it(
-    "fetches upcoming events using a date comparison filter",
-    async () => {
-      const client =
-        createTestClient();
+  it("filters courses using a date comparison filter", async () => {
+    const client = createTestClient();
 
-      const today = new Date();
+    // Use the existing Drupal fixture to choose a date cutoff.
+    // This avoids depending on hard-coded dates or the current date.
+    const collection = await client
+      .resource<CourseAttributes>("node--course")
+      .limit(10)
+      .get();
 
-      today.setHours(
-        0,
-        0,
-        0,
-        0
-      );
+    expect(collection.data.length).toBeGreaterThan(0);
 
-      const todayIso =
-        today.toISOString();
+    const courseDates = collection.data.map(
+      course => course.attributes.field_date.value
+    );
 
-      const response =
-        await client
-          .resource("node--event")
-          .filter(
-            "field_date.value",
-            ">=",
-            todayIso
-          )
-          .sort(
-            "field_date.value"
-          )
-          .limit(5)
-          .get();
+    expect(courseDates.every(date => Boolean(date))).toBe(true);
 
-      console.log(
-        "\nDrupal integration test:"
-      );
+    const sortedDates = [...courseDates].sort();
+    const cutoff = sortedDates[Math.floor(sortedDates.length / 2)];
 
-      console.log(
-        "Today:",
-        todayIso
-      );
+    const expectedCourses = collection.data.filter(
+      course => course.attributes.field_date.value >= cutoff
+    );
 
-      console.log(
-        "Upcoming events:",
-        response.data.length
-      );
+    const response = await client
+      .resource<CourseAttributes>("node--course")
+      .filter("field_date.value", ">=", cutoff)
+      .sort("field_date.value")
+      .limit(10)
+      .get();
 
-      console.log(
-        "Response:",
-        JSON.stringify(
-          response,
-          null,
-          2
-        )
-      );
+    expect(response.data.length).toBeGreaterThan(0);
 
-      expect(response)
-        .toHaveProperty("data");
+    // Confirm Drupal returned the same courses that satisfy the comparison.
+    expect(response.data.map(course => course.id).sort()).toEqual(
+      expectedCourses.map(course => course.id).sort()
+    );
 
-      expect(
-        Array.isArray(
-          response.data
-        )
-      ).toBe(true);
-    }
-  );
+    // Confirm the requested sort order is applied.
+    const responseDates = response.data.map(
+      course => course.attributes.field_date.value
+    );
 
-  it(
-    "serializes comparison filters using Drupal condition syntax",
-    () => {
-      const query =
-        DrupalQueryBuilder
-          .create("node--event")
-          .filter(
-            "field_date.value",
-            ">=",
-            "2026-08-13"
-          );
+    expect(responseDates).toEqual([...responseDates].sort());
+  });
 
-      const params =
-        DrupalQuerySerializer
-          .serialize(query);
+  it("serializes comparison filters using Drupal condition syntax", () => {
+    const query = DrupalQueryBuilder.create("node--course").filter(
+      "field_date.value",
+      ">=",
+      "2026-08-13"
+    );
 
-      expect(
-        params.toString()
-      ).toBe(
-        "filter%5Bcondition_0%5D%5Bcondition%5D%5Bpath%5D=field_date.value&filter%5Bcondition_0%5D%5Bcondition%5D%5Boperator%5D=%3E%3D&filter%5Bcondition_0%5D%5Bcondition%5D%5Bvalue%5D=2026-08-13"
-      );
-    }
-  );
+    const params = DrupalQuerySerializer.serialize(query);
 
-  it(
-    "retrieves the Drupal event collection without filters",
-    async () => {
-      const client =
-        createTestClient();
+    expect(params.toString()).toBe(
+      "filter%5Bcondition_0%5D%5Bcondition%5D%5Bpath%5D=field_date.value&filter%5Bcondition_0%5D%5Bcondition%5D%5Boperator%5D=%3E%3D&filter%5Bcondition_0%5D%5Bcondition%5D%5Bvalue%5D=2026-08-13"
+    );
+  });
 
-      const response =
-        await client
-          .resource("node--event")
-          .limit(5)
-          .get();
+  it("retrieves the Drupal Course collection without filters", async () => {
+    const client = createTestClient();
 
-      console.log(
-        "\nDrupal event collection:"
-      );
+    const response = await client
+      .resource<CourseAttributes>("node--course")
+      .limit(10)
+      .get();
 
-      console.log(
-        "Event count:",
-        response.data.length
-      );
+    expect(response).toHaveProperty("data");
+    expect(Array.isArray(response.data)).toBe(true);
+    expect(response.data).toHaveLength(4);
 
-      console.log(
-        "Response:",
-        JSON.stringify(
-          response,
-          null,
-          2
-        )
-      );
-
-      expect(response)
-        .toHaveProperty("data");
-
-      expect(
-        Array.isArray(
-          response.data
-        )
-      ).toBe(true);
-    }
-  );
+    expect(response.data.map(course => course.attributes.title)).toEqual(
+      expect.arrayContaining([
+        "Introduction to Computer Science",
+        "Data Structures",
+        "Discrete Mathematics",
+        "Algorithms"
+      ])
+    );
+  });
 });

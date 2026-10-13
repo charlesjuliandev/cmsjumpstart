@@ -63,17 +63,26 @@ type CourseRelationshipDefinitions = {
 };
 
 describe("Drupal Course resource integration", () => {
+  
   const createTestClient = () => {
     if (
       !drupalUrl ||
       !httpAuthUsername ||
-      !httpAuthPassword ||
-      !consumerId ||
-      !apiKey
+      !httpAuthPassword
     ) {
       throw new Error(
-        "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, DRUPAL_PASSWORD, CONSUMERUUID, or API_KEY environment variables."
+        "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, or DRUPAL_PASSWORD environment variables."
       );
+    }
+
+    const headers: Record<string, string> = {};
+
+    if (consumerId) {
+      headers["X-Consumer-ID"] = consumerId;
+    }
+
+    if (apiKey) {
+      headers["api-key"] = apiKey;
     }
 
     return new DrupalClient({
@@ -83,12 +92,12 @@ describe("Drupal Course resource integration", () => {
         username: httpAuthUsername,
         password: httpAuthPassword
       },
-      headers: {
-        "X-Consumer-ID": consumerId,
-        "api-key": apiKey
-      }
+      ...(Object.keys(headers).length > 0
+        ? { headers }
+        : {})
     });
   };
+
 
   it("fetches the real Course collection from Drupal", async () => {
     const client = createTestClient();
@@ -797,7 +806,7 @@ describe("Drupal Course resource integration", () => {
     );
   });
 
-  it("fetches the Course collection when optional custom headers are supplied", async () => {
+  it("fetches the Course collection using the configured authentication", async () => {
     const client = createTestClient();
 
     const response = await client
