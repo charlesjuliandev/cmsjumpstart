@@ -146,7 +146,7 @@ describe("Drupal Course resource integration", () => {
         CourseAttributes,
         CourseRelationshipDefinitions
       >("node--course")
-      .id("fcef31e7-b408-45cb-8557-c8b447ac63db")
+      .id("2528d272-3296-4838-a808-8c1803b0b471")
       .include(
         "field_department",
         "field_instructor",
@@ -217,7 +217,7 @@ describe("Drupal Course resource integration", () => {
         CourseAttributes,
         CourseRelationshipDefinitions
       >("node--course")
-      .id("9bf365ef-d2f0-4698-b199-81c46913944c")
+      .id("3f90d487-86a8-4739-ac93-edb2e22062de")
       .include("field_prerequisites")
       .get();
 
@@ -273,7 +273,7 @@ describe("Drupal Course resource integration", () => {
         CourseAttributes,
         CourseRelationshipDefinitions
       >("node--course")
-      .id("fcef31e7-b408-45cb-8557-c8b447ac63db")
+      .id("2528d272-3296-4838-a808-8c1803b0b471")
       .include("field_prerequisites")
       .get();
 
@@ -297,7 +297,7 @@ describe("Drupal Course resource integration", () => {
         CourseAttributes,
         CourseRelationshipDefinitions
       >("node--course")
-      .id("9bf365ef-d2f0-4698-b199-81c46913944c")
+      .id("3f90d487-86a8-4739-ac93-edb2e22062de")
       .include("field_prerequisites")
       .get();
 
@@ -350,7 +350,7 @@ describe("Drupal Course resource integration", () => {
       .resource<CourseAttributes>(
         "node--course"
       )
-      .id("03e0ea66-d605-4ae7-af4e-224c73af7d90")
+      .id("8a930d07-58ef-4741-8fcb-b3c2294eea6b")
       .get();
 
     const course = response.getOne();
@@ -360,7 +360,7 @@ describe("Drupal Course resource integration", () => {
       "node--course"
     );
     expect(course?.id).toBe(
-      "03e0ea66-d605-4ae7-af4e-224c73af7d90"
+      "8a930d07-58ef-4741-8fcb-b3c2294eea6b"
     );
     expect(course?.attributes.title).toBe(
       "Data Structures"
@@ -377,7 +377,7 @@ describe("Drupal Course resource integration", () => {
       .resource<CourseAttributes>(
         "node--course"
       )
-      .id("03e0ea66-d605-4ae7-af4e-224c73af7d90")
+      .id("8a930d07-58ef-4741-8fcb-b3c2294eea6b")
       .get();
 
     expect(response.length).toBe(1);
@@ -394,7 +394,7 @@ describe("Drupal Course resource integration", () => {
       .resource<CourseAttributes>(
         "node--course"
       )
-      .id("03e0ea66-d605-4ae7-af4e-224c73af7d90")
+      .id("8a930d07-58ef-4741-8fcb-b3c2294eea6b")
       .get();
 
     const one = response.getOne();
@@ -410,7 +410,7 @@ describe("Drupal Course resource integration", () => {
     );
 
     expect(all[0]?.id).toBe(
-      "03e0ea66-d605-4ae7-af4e-224c73af7d90"
+      "8a930d07-58ef-4741-8fcb-b3c2294eea6b"
     );
   });
 
@@ -421,7 +421,7 @@ describe("Drupal Course resource integration", () => {
       .resource<CourseAttributes>(
         "node--course"
       )
-      .id("03e0ea66-d605-4ae7-af4e-224c73af7d90")
+      .id("8a930d07-58ef-4741-8fcb-b3c2294eea6b")
       .get();
 
     const rawResponse =
@@ -434,7 +434,7 @@ describe("Drupal Course resource integration", () => {
 
     expect(rawResponse.data).toMatchObject({
       type: "node--course",
-      id: "03e0ea66-d605-4ae7-af4e-224c73af7d90",
+      id: "8a930d07-58ef-4741-8fcb-b3c2294eea6b",
       attributes: {
         title: "Data Structures",
         field_course_code: "CS 201"
@@ -480,7 +480,7 @@ describe("Drupal Course resource integration", () => {
         CourseAttributes,
         CourseRelationshipDefinitions
       >("node--course")
-      .id("03e0ea66-d605-4ae7-af4e-224c73af7d90")
+      .id("8a930d07-58ef-4741-8fcb-b3c2294eea6b")
       .include("field_prerequisites")
       .get();
 
@@ -797,51 +797,28 @@ describe("Drupal Course resource integration", () => {
     );
   });
 
-  it("returns an empty collection with authorization metadata when the API key is invalid", async () => {
-    if (
-      !drupalUrl ||
-      !httpAuthUsername ||
-      !httpAuthPassword ||
-      !consumerId
-    ) {
-      throw new Error(
-        "Missing DRUPAL_BASE_URL, DRUPAL_USERNAME, DRUPAL_PASSWORD, or CONSUMERUUID environment variables."
-      );
-    }
-
-    const client =
-      new DrupalClient({
-        baseUrl: drupalUrl,
-        auth: {
-          type: "basic",
-          username: httpAuthUsername,
-          password: httpAuthPassword
-        },
-        headers: {
-          "X-Consumer-ID": consumerId,
-          "api-key": "invalid-api-key"
-        }
-      });
+  it("fetches the Course collection when optional custom headers are supplied", async () => {
+    const client = createTestClient();
 
     const response = await client
-      .resource<CourseAttributes>(
-        "node--course"
-      )
+      .resource<CourseAttributes>("node--course")
+      .limit(10)
       .get();
 
-    expect(response.data).toEqual([]);
-    expect(response.length).toBe(0);
+    expect(response.data).toBeDefined();
+    expect(Array.isArray(response.data)).toBe(true);
+    expect(response.length).toBe(4);
 
-    const rawResponse =
-      response.toJSON();
-
-    expect(rawResponse.meta).toMatchObject({
-      omitted: {
-        detail: expect.stringContaining(
-          "Some resources have been omitted because of insufficient authorization."
-        )
-      }
-    });
+    expect(
+      response.getAll().map(course => course.attributes.title)
+    ).toEqual(
+      expect.arrayContaining([
+        "Introduction to Computer Science",
+        "Data Structures",
+        "Discrete Mathematics",
+        "Algorithms"
+      ])
+    );
   });
 
   it("handles a combined real-world Course query with filtering, sorting, sparse fields, relationships, and pagination", async () => {

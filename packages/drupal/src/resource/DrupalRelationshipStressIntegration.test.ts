@@ -124,7 +124,7 @@ describe(
         const response =
           await courses()
             .id(
-              "fcef31e7-b408-45cb-8557-c8b447ac63db"
+              "2528d272-3296-4838-a808-8c1803b0b471"
             )
             .include(
               "field_department",
@@ -194,7 +194,7 @@ describe(
     it("resolves multiple to-many prerequisites from a real Course", async () => {
         const response =
             await courses()
-            .id("9bf365ef-d2f0-4698-b199-81c46913944c")
+            .id("3f90d487-86a8-4739-ac93-edb2e22062de")
             .include("field_prerequisites")
             .get();
 
@@ -228,7 +228,7 @@ describe(
         const response =
           await courses()
             .id(
-              "fcef31e7-b408-45cb-8557-c8b447ac63db"
+              "2528d272-3296-4838-a808-8c1803b0b471"
             )
             .include(
               "field_prerequisites"
@@ -254,7 +254,7 @@ describe(
         const response =
           await courses()
             .id(
-              "fcef31e7-b408-45cb-8557-c8b447ac63db"
+              "2528d272-3296-4838-a808-8c1803b0b471"
             )
             .include(
               "field_department",
@@ -315,7 +315,7 @@ describe(
         const response =
           await courses()
             .id(
-              "9bf365ef-d2f0-4698-b199-81c46913944c"
+              "3f90d487-86a8-4739-ac93-edb2e22062de"
             )
             .include(
               "field_department",
@@ -369,19 +369,19 @@ describe(
         expect(
           department?.id
         ).toBe(
-          "6e372bc2-0126-4bc4-955c-1136b5c135bb"
+          "01fc13bf-590a-4093-ae89-1263f101247b"
         );
 
         expect(
           instructor?.id
         ).toBe(
-          "4ed5b8a2-51dc-496d-ba03-ff214e184daa"
+          "be7886c8-35af-4db1-ad6e-afaf2b91ffe5"
         );
 
         expect(
           location?.id
         ).toBe(
-          "7810fb73-9d77-478f-8c58-5afdc8e52806"
+          "cbe85d50-fa32-428e-88b5-ba347856314c"
         );
       }
     );
@@ -392,7 +392,7 @@ describe(
         const response =
           await courses()
             .id(
-              "9bf365ef-d2f0-4698-b199-81c46913944c"
+              "3f90d487-86a8-4739-ac93-edb2e22062de"
             )
             .include(
               "field_prerequisites"
@@ -443,7 +443,7 @@ describe(
       "resolves prerequisite relationship chain using real Drupal data",
       async () => {
         const query = courses()
-        .id("9bf365ef-d2f0-4698-b199-81c46913944c")
+        .id("3f90d487-86a8-4739-ac93-edb2e22062de")
         .include("field_prerequisites.field_prerequisites");
 
         const algorithmsResponse = await query.get();
@@ -493,7 +493,7 @@ describe(
         const response =
           await courses()
             .id(
-              "9bf365ef-d2f0-4698-b199-81c46913944c"
+              "3f90d487-86a8-4739-ac93-edb2e22062de"
             )
             .fields(
               "title",
@@ -582,7 +582,7 @@ describe(
         const response =
           await courses()
             .id(
-              "9bf365ef-d2f0-4698-b199-81c46913944c"
+              "3f90d487-86a8-4739-ac93-edb2e22062de"
             )
             .include(
               "field_department",
@@ -612,7 +612,7 @@ describe(
             ?.field_department?.data
         ).toMatchObject({
           type: "node--department",
-          id: "6e372bc2-0126-4bc4-955c-1136b5c135bb"
+          id: "01fc13bf-590a-4093-ae89-1263f101247b"
         });
 
         expect(
@@ -620,7 +620,7 @@ describe(
             ?.field_instructor?.data
         ).toMatchObject({
           type: "node--person",
-          id: "4ed5b8a2-51dc-496d-ba03-ff214e184daa"
+          id: "be7886c8-35af-4db1-ad6e-afaf2b91ffe5"
         });
 
         expect(
@@ -628,7 +628,7 @@ describe(
             ?.field_location?.data
         ).toMatchObject({
           type: "node--location",
-          id: "7810fb73-9d77-478f-8c58-5afdc8e52806"
+          id: "cbe85d50-fa32-428e-88b5-ba347856314c"
         });
 
         expect(
@@ -637,15 +637,15 @@ describe(
           expect.arrayContaining([
             expect.objectContaining({
               type: "node--department",
-              id: "6e372bc2-0126-4bc4-955c-1136b5c135bb"
+              id: "01fc13bf-590a-4093-ae89-1263f101247b"
             }),
             expect.objectContaining({
               type: "node--person",
-              id: "4ed5b8a2-51dc-496d-ba03-ff214e184daa"
+              id: "be7886c8-35af-4db1-ad6e-afaf2b91ffe5"
             }),
             expect.objectContaining({
               type: "node--location",
-              id: "7810fb73-9d77-478f-8c58-5afdc8e52806"
+              id: "cbe85d50-fa32-428e-88b5-ba347856314c"
             })
           ])
         );
