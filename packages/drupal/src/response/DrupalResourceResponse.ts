@@ -2,15 +2,15 @@ import type {
   DrupalJsonApiRelationship,
   DrupalRelationshipDefinitions,
   DrupalResponse
-} from "../types/DrupalResponse";
+} from "../types/DrupalResponse.js";
 
 import type {
   RequestExecutor
-} from "../executor/RequestExecutor";
+} from "../executor/RequestExecutor.js";
 
 import {
   DrupalResourceItem
-} from "../resource/DrupalResourceItem";
+} from "../resource/DrupalResourceItem.js";
 
 export class DrupalResourceResponse<
   TAttributes extends Record<string, unknown> =

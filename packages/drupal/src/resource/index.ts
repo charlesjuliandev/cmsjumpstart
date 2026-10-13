@@ -1,7 +1,7 @@
 export {
   DrupalResource
-} from "./DrupalResource";
+} from "./DrupalResource.js";
 
 export {
   DrupalResourceItem
-} from "./DrupalResourceItem";
+} from "./DrupalResourceItem.js";

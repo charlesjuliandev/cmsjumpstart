@@ -1,11 +1,11 @@
-import type { DrupalClientConfig } from "../types/DrupalClientConfig";
-import { DrupalResource } from "../resource/DrupalResource";
-import { RequestExecutor } from "../executor/RequestExecutor";
+import type { DrupalClientConfig } from "../types/DrupalClientConfig.js";
+import { DrupalResource } from "../resource/DrupalResource.js";
+import { RequestExecutor } from "../executor/RequestExecutor.js";
 import type {
   DrupalJsonApiRelationship,
   DrupalRelationshipDefinitions,
-} from "../types/DrupalResponse";
-import { encodeBase64 } from "../utils/base64";
+} from "../types/DrupalResponse.js";
+import { encodeBase64 } from "../utils/base64.js";
 export class DrupalClient {
   private readonly executor: RequestExecutor;
   constructor(

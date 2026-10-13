@@ -4,7 +4,7 @@ import {
 
 import {
   getResourceCacheTags
-} from "../cache/cacheTags";
+} from "../cache/cacheTags.js";
 
 export function revalidateResource(
   resourceType: string,

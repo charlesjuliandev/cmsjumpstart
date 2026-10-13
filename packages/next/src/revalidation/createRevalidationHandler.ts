@@ -5,7 +5,7 @@ import {
 
 import {
   revalidateResource
-} from "./revalidateResource";
+} from "./revalidateResource.js";
 
 export interface RevalidationHandlerOptions {
   secret: string;

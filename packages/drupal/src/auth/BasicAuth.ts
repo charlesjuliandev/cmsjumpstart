@@ -1,4 +1,4 @@
-import { AuthProvider } from "./AuthProvider";
+import { AuthProvider } from "./AuthProvider.js";
 
 export class BasicAuth implements AuthProvider {
   constructor(

@@ -1,15 +1,15 @@
 import type {
   DrupalResponse
-} from "../types";
+} from "../types/index.js";
 
 import type {
   AuthProvider
-} from "../auth/AuthProvider";
+} from "../auth/AuthProvider.js";
 
 import type {
   DrupalJsonApiRelationship,
   DrupalJsonApiLink
-} from "../types/DrupalResponse";
+} from "../types/DrupalResponse.js";
 
 export interface RequestOptions {
   headers?: Record<string, string>;

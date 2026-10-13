@@ -1,4 +1,4 @@
-import type { DrupalAuth } from "./Auth";
+import type { DrupalAuth } from "./Auth.js";
 
 export interface DrupalRequestOptions {
   headers?: Record<string, string>;

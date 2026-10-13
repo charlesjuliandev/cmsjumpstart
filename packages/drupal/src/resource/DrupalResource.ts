@@ -1,31 +1,31 @@
 import {
   DrupalQueryBuilder
-} from "../query/DrupalQueryBuilder";
+} from "../query/DrupalQueryBuilder.js";
 
 import {
   DrupalQuerySerializer
-} from "../query/DrupalQuerySerializer";
+} from "../query/DrupalQuerySerializer.js";
 
 import type {
   DrupalFilterOperator,
   DrupalFilterValue,
   DrupalResourceVersion
-} from "../query/types";
+} from "../query/types.js";
 
 import {
   RequestExecutor
-} from "../executor/RequestExecutor";
+} from "../executor/RequestExecutor.js";
 
 import type {
   DrupalJsonApiRelationship,
   DrupalJsonApiResource,
   DrupalRelationshipDefinitions,
   DrupalResponse
-} from "../types/DrupalResponse";
+} from "../types/DrupalResponse.js";
 
 import {
   DrupalResourceResponse
-} from "../response/DrupalResourceResponse";
+} from "../response/DrupalResourceResponse.js";
 
 export class DrupalResource<
   TAttributes extends Record<string, unknown> =

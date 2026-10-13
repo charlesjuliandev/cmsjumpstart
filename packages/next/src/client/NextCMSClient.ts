@@ -9,15 +9,15 @@ import type {
 
 import {
   NextRequestExecutor
-} from "../executor/NextRequestExecutor";
+} from "../executor/NextRequestExecutor.js";
 
 import {
   NextCMSResource
-} from "../resource/NextCMSResource";
+} from "../resource/NextCMSResource.js";
 
 import type {
   NextCMSConfig
-} from "../config/NextCMSConfig";
+} from "../config/NextCMSConfig.js";
 
 export class NextCMSClient {
   private readonly drupal:

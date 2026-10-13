@@ -4,7 +4,7 @@ import type {
 
 import type {
   NextRequestOptions
-} from "../executor/NextRequestExecutor";
+} from "../executor/NextRequestExecutor.js";
 
 export interface NextCMSConfig {
   /**

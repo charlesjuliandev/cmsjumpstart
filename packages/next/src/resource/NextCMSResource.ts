@@ -12,7 +12,7 @@ import type {
   DrupalQueryBuilder,
 } from "@cmsjumpstart/drupal";
 
-import { NextRequestExecutor } from "../executor/NextRequestExecutor";
+import { NextRequestExecutor } from "../executor/NextRequestExecutor.js";
 
 export class NextCMSResource<
   TAttributes extends Record<string, unknown> =

@@ -6,7 +6,7 @@ import type {
   DrupalRelationshipCardinality,
   DrupalRelationshipDefinitions,
   DrupalRelationshipRelationships
-} from "../types/DrupalResponse";
+} from "../types/DrupalResponse.js";
 
 type DrupalTypedRelationships<
   TDefinition

@@ -1,10 +1,10 @@
 import type {
   DrupalQueryBuilder
-} from "./DrupalQueryBuilder";
+} from "./DrupalQueryBuilder.js";
 
 import type {
   DrupalFilterValue
-} from "./types";
+} from "./types.js";
 
 export class DrupalQuerySerializer {
   static serialize(

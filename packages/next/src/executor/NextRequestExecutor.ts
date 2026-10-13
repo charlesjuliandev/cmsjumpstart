@@ -9,7 +9,7 @@ import type {
 
 import {
   getResourceCacheTags
-} from "../cache/cacheTags";
+} from "../cache/cacheTags.js";
 
 interface NextFetchRequestInit
   extends RequestInit {

@@ -3,7 +3,7 @@ import type {
   DrupalFilterValue,
   DrupalQueryOptions,
   DrupalResourceVersion
-} from "./types";
+} from "./types.js";
 
 export class DrupalQueryBuilder {
   private constructor(

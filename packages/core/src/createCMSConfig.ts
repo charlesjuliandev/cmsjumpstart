@@ -1,4 +1,4 @@
-import type { CMSJumpstartConfig } from "./config";
+import type { CMSJumpstartConfig } from "./config.js";
 
 export function createCMSConfig(
   config: CMSJumpstartConfig

@@ -1,5 +1,5 @@
-import { DrupalClient } from "./DrupalClient";
-import type { DrupalClientConfig } from "../types/DrupalClientConfig";
+import { DrupalClient } from "./DrupalClient.js";
+import type { DrupalClientConfig } from "../types/DrupalClientConfig.js";
 
 export interface CreateDrupalClientOptions
   extends Omit<DrupalClientConfig, "auth"> {

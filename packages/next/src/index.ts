@@ -1,39 +1,39 @@
 export {
   createNextCMS
-} from "./server/createNextCMS";
+} from "./server/createNextCMS.js";
 
 export {
   NextCMSClient
-} from "./client/NextCMSClient";
+} from "./client/NextCMSClient.js";
 
 export {
   NextCMSResource
-} from "./resource/NextCMSResource";
+} from "./resource/NextCMSResource.js";
 
 export type {
   NextCMSConfig
-} from "./config/NextCMSConfig";
+} from "./config/NextCMSConfig.js";
 
 export type {
   NextRequestOptions
-} from "./executor/NextRequestExecutor";
+} from "./executor/NextRequestExecutor.js";
 
 export {
   revalidateResource
-} from "./revalidation/revalidateResource";
+} from "./revalidation/revalidateResource.js";
 
 export {
   createRevalidationHandler
-} from "./revalidation/createRevalidationHandler";
+} from "./revalidation/createRevalidationHandler.js";
 
 export type {
   RevalidationHandlerOptions
-} from "./revalidation/createRevalidationHandler";
+} from "./revalidation/createRevalidationHandler.js";
 
 export {
   createPreviewHandler
-} from "./preview/createPreviewHandler";
+} from "./preview/createPreviewHandler.js";
 
 export type {
   PreviewHandlerOptions
-} from "./preview/createPreviewHandler";
+} from "./preview/createPreviewHandler.js";

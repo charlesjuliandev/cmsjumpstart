@@ -1,6 +1,6 @@
-export { createCMSConfig } from "./createCMSConfig";
+export { createCMSConfig } from "./createCMSConfig.js";
 
 export type {
   CMSJumpstartConfig,
   CMSProvider
-} from "./config";
+} from "./config.js";

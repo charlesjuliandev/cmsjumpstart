@@ -1,14 +1,14 @@
-export * from "./query/DrupalQueryBuilder";
-export * from "./query/types";
-export * from "./query/DrupalQuerySerializer";
+export * from "./query/DrupalQueryBuilder.js";
+export * from "./query/types.js";
+export * from "./query/DrupalQuerySerializer.js";
 
-export * from "./client";
+export * from "./client/index.js";
 
-export * from "./resource/DrupalResource";
+export * from "./resource/DrupalResource.js";
 
-export * from "./response";
+export * from "./response/index.js";
 
-export * from "./types";
+export * from "./types/index.js";
 
-export * from "./auth/AuthProvider";
-export * from "./auth/BasicAuth";
+export * from "./auth/AuthProvider.js";
+export * from "./auth/BasicAuth.js";
