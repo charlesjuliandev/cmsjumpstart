@@ -17,7 +17,7 @@ function getPreviewSecret(): string {
   return secret;
 }
 
-export const GET =
+export const POST =
   createPreviewHandler({
     secret:
       getPreviewSecret()

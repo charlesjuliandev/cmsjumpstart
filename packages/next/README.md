@@ -64,7 +64,24 @@ It also exports `createRevalidationHandler` for handling supported CMS or Drupal
 
 ## Preview handler
 
-`createPreviewHandler` provides a handler for enabling Next.js draft mode and redirecting to a requested path. Configure a secret, keep it private, and use HTTPS in production. The handler validates that the redirect path is local rather than an external URL.
+`createPreviewHandler` provides a POST handler for enabling Next.js Draft Mode and redirecting to a validated local path.
+
+The handler requires the configured secret in the `Authorization: Bearer <secret>` header and the destination in a JSON request body. Never place the preview secret in a URL, query string, or client-side code. Use HTTPS in production and keep the secret in a server-only environment variable.
+
+Example request:
+
+```http
+POST /preview HTTP/1.1
+Authorization: Bearer your-server-side-preview-secret
+Content-Type: application/json
+
+{"path":"/about-us"}
+```
+
+The handler rejects requests that use other HTTP methods, invalid credentials, malformed JSON, or external redirect destinations before enabling Draft Mode.
+
+**Integration note:** This endpoint is a server-side primitive, not a complete Drupal editor-to-browser preview workflow. A server-to-server request does not set Draft Mode cookies in an editor's browser. A browser-based preview workflow requires a separate, securely designed handoff to establish Draft Mode in that browser.
+
 
 ## Exports
 

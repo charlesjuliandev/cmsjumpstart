@@ -47,12 +47,76 @@ import {
   createPreviewHandler
 } from "./createPreviewHandler";
 
+const previewSecret =
+  "correct-secret";
+
+function createPreviewRequest(
+  options: {
+    method?: string;
+    path?: string;
+    secret?: string;
+    url?: string;
+    body?: string;
+  } = {}
+): Request {
+  const {
+    method = "POST",
+    path = "/",
+    secret = previewSecret,
+    url = "https://example.com/preview",
+    body
+  } = options;
+
+  const headers =
+    new Headers();
+
+  if (secret) {
+    headers.set(
+      "Authorization",
+      `Bearer ${secret}`
+    );
+  }
+
+  const requestOptions: RequestInit = {
+    method,
+    headers
+  };
+
+  if (
+    body !== undefined
+  ) {
+    headers.set(
+      "Content-Type",
+      "application/json"
+    );
+
+    requestOptions.body = body;
+  } else if (
+    method !== "GET" &&
+    method !== "HEAD"
+  ) {
+    headers.set(
+      "Content-Type",
+      "application/json"
+    );
+
+    requestOptions.body =
+      JSON.stringify({
+        path
+      });
+  }
+
+  return new Request(
+    url,
+    requestOptions
+  );
+}
+
 describe(
   "createPreviewHandler",
   () => {
     beforeEach(() => {
       mocks.enable.mockClear();
-
       mocks.redirect.mockClear();
     });
 
@@ -70,19 +134,87 @@ describe(
     );
 
     it(
-      "rejects an invalid secret",
+      "rejects methods other than POST",
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         const response =
           await handler(
-            new Request(
-              "https://example.com/preview?secret=wrong&path=/"
-            )
+            createPreviewRequest({
+              method: "GET"
+            })
+          );
+
+        expect(
+          response.status
+        ).toBe(405);
+
+        expect(
+          response.headers.get("Allow")
+        ).toBe("POST");
+
+        expect(
+          mocks.enable
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mocks.redirect
+        ).not.toHaveBeenCalled();
+      }
+    );
+
+    it(
+      "rejects preview secrets supplied in the URL",
+      async () => {
+        const handler =
+          createPreviewHandler({
+            secret: previewSecret
+          });
+
+        const response =
+          await handler(
+            createPreviewRequest({
+              url:
+                "https://example.com/preview?secret=correct-secret"
+            })
+          );
+
+        expect(
+          response.status
+        ).toBe(400);
+
+        await expect(
+          response.text()
+        ).resolves.toBe(
+          "Do not send preview secrets in the URL."
+        );
+
+        expect(
+          mocks.enable
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mocks.redirect
+        ).not.toHaveBeenCalled();
+      }
+    );
+
+    it(
+      "rejects an invalid bearer token",
+      async () => {
+        const handler =
+          createPreviewHandler({
+            secret: previewSecret
+          });
+
+        const response =
+          await handler(
+            createPreviewRequest({
+              secret: "wrong-secret"
+            })
           );
 
         expect(
@@ -106,19 +238,18 @@ describe(
     );
 
     it(
-      "rejects a missing secret",
+      "rejects a missing bearer token",
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         const response =
           await handler(
-            new Request(
-              "https://example.com/preview?path=/"
-            )
+            createPreviewRequest({
+              secret: ""
+            })
           );
 
         expect(
@@ -142,19 +273,53 @@ describe(
     );
 
     it(
-      "rejects a missing path",
+      "rejects malformed JSON",
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         const response =
           await handler(
-            new Request(
-              "https://example.com/preview?secret=correct-secret"
-            )
+            createPreviewRequest({
+              body: "{invalid-json"
+            })
+          );
+
+        expect(
+          response.status
+        ).toBe(400);
+
+        await expect(
+          response.text()
+        ).resolves.toBe(
+          "A valid JSON request body is required."
+        );
+
+        expect(
+          mocks.enable
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mocks.redirect
+        ).not.toHaveBeenCalled();
+      }
+    );
+
+    it(
+      "rejects a missing preview path",
+      async () => {
+        const handler =
+          createPreviewHandler({
+            secret: previewSecret
+          });
+
+        const response =
+          await handler(
+            createPreviewRequest({
+              body: JSON.stringify({})
+            })
           );
 
         expect(
@@ -182,15 +347,15 @@ describe(
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         const response =
           await handler(
-            new Request(
-              "https://example.com/preview?secret=correct-secret&path=https%3A%2F%2Fevil.example.com"
-            )
+            createPreviewRequest({
+              path:
+                "https://evil.example.com"
+            })
           );
 
         expect(
@@ -218,26 +383,50 @@ describe(
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         const response =
           await handler(
-            new Request(
-              "https://example.com/preview?secret=correct-secret&path=%2F%2Fevil.example.com"
-            )
+            createPreviewRequest({
+              path:
+                "//evil.example.com"
+            })
           );
 
         expect(
           response.status
         ).toBe(400);
 
-        await expect(
-          response.text()
-        ).resolves.toBe(
-          "A valid preview path is required."
-        );
+        expect(
+          mocks.enable
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mocks.redirect
+        ).not.toHaveBeenCalled();
+      }
+    );
+
+    it(
+      "rejects a backslash-based external URL",
+      async () => {
+        const handler =
+          createPreviewHandler({
+            secret: previewSecret
+          });
+
+        const response =
+          await handler(
+            createPreviewRequest({
+              path:
+                "/\\evil.example.com"
+            })
+          );
+
+        expect(
+          response.status
+        ).toBe(400);
 
         expect(
           mocks.enable
@@ -254,15 +443,14 @@ describe(
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         await expect(
           handler(
-            new Request(
-              "https://example.com/preview?secret=correct-secret&path=%2Fabout-us"
-            )
+            createPreviewRequest({
+              path: "/about-us"
+            })
           )
         ).rejects.toThrow(
           "REDIRECT:/about-us"
@@ -270,9 +458,7 @@ describe(
 
         expect(
           mocks.enable
-        ).toHaveBeenCalledTimes(
-          1
-        );
+        ).toHaveBeenCalledTimes(1);
 
         expect(
           mocks.redirect
@@ -287,15 +473,15 @@ describe(
       async () => {
         const handler =
           createPreviewHandler({
-            secret:
-              "correct-secret"
+            secret: previewSecret
           });
 
         await expect(
           handler(
-            new Request(
-              "https://example.com/preview?secret=correct-secret&path=%2Fabout-us%3Ffoo%3Dbar"
-            )
+            createPreviewRequest({
+              path:
+                "/about-us?foo=bar"
+            })
           )
         ).rejects.toThrow(
           "REDIRECT:/about-us?foo=bar"
@@ -303,15 +489,36 @@ describe(
 
         expect(
           mocks.enable
-        ).toHaveBeenCalledTimes(
-          1
-        );
+        ).toHaveBeenCalledTimes(1);
 
         expect(
           mocks.redirect
         ).toHaveBeenCalledWith(
           "/about-us?foo=bar"
         );
+      }
+    );
+
+    it(
+      "marks error responses as non-cacheable",
+      async () => {
+        const handler =
+          createPreviewHandler({
+            secret: previewSecret
+          });
+
+        const response =
+          await handler(
+            createPreviewRequest({
+              secret: "wrong-secret"
+            })
+          );
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
       }
     );
   }
