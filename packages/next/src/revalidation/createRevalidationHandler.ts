@@ -52,7 +52,10 @@ function createErrorResponse(
       error: message
     },
     {
-      status
+      status,
+      headers: {
+        "Cache-Control": "no-store"
+      }
     }
   );
 }

@@ -1,3 +1,4 @@
+
 import {
   createHmac
 } from "node:crypto";
@@ -375,6 +376,12 @@ describe(
         ).toBe(401);
 
         expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
+
+        expect(
           revalidateResource
         ).not.toHaveBeenCalled();
       }
@@ -410,6 +417,12 @@ describe(
         expect(
           response.status
         ).toBe(401);
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
 
         expect(
           revalidateResource
@@ -450,6 +463,12 @@ describe(
         ).toBe(401);
 
         expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
+
+        expect(
           revalidateResource
         ).not.toHaveBeenCalled();
       }
@@ -485,6 +504,12 @@ describe(
         expect(
           response.status
         ).toBe(401);
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
       }
     );
 
@@ -513,6 +538,12 @@ describe(
         expect(
           response.status
         ).toBe(400);
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
 
         expect(
           revalidateResource
@@ -548,6 +579,12 @@ describe(
         expect(
           response.status
         ).toBe(400);
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
       }
     );
 
@@ -590,6 +627,12 @@ describe(
         expect(
           response.status
         ).toBe(400);
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
       }
     );
 
@@ -632,6 +675,12 @@ describe(
         expect(
           response.status
         ).toBe(400);
+
+        expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
       }
     );
 
@@ -683,10 +732,15 @@ describe(
         ).toBe(400);
 
         expect(
+          response.headers.get(
+            "Cache-Control"
+          )
+        ).toBe("no-store");
+
+        expect(
           revalidateResource
         ).not.toHaveBeenCalled();
       }
     );
   }
 );
-

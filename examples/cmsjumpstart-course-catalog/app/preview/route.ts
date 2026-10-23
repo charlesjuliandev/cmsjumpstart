@@ -1,24 +1,25 @@
+
 import {
   createPreviewHandler
 } from "@cmsjumpstart/next";
 
-function getPreviewSecret(): string {
-  const secret =
-    process.env
-      .CMSJUMPSTART_PREVIEW_SECRET
-      ?.trim();
+function getRequiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
 
-  if (!secret) {
+  if (!value) {
     throw new Error(
-      "Missing required environment variable: CMSJUMPSTART_PREVIEW_SECRET"
+      `Missing required environment variable: ${name}`
     );
   }
 
-  return secret;
+  return value;
 }
 
-export const POST =
-  createPreviewHandler({
-    secret:
-      getPreviewSecret()
-  });
+export const POST = createPreviewHandler({
+  secret: getRequiredEnv(
+    "CMSJUMPSTART_PREVIEW_SECRET"
+  ),
+  allowedOrigin: getRequiredEnv(
+    "CMSJUMPSTART_PREVIEW_ALLOWED_ORIGIN"
+  )
+});

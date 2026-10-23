@@ -618,39 +618,25 @@ The URL itself is not the security mechanism.
 
 # Preview Security
 
-Preview activation must be explicitly authorized.
+**Obsolete preview authentication flow**
 
-The `/preview` route must not enable preview mode for arbitrary unauthenticated requests.
-
-Applications should validate a secret or equivalent authorization mechanism before calling:
-
-```ts
-draftMode().enable();
-```
-
-The exact authentication mechanism belongs to the application because authentication requirements vary between deployments.
-
-A typical flow is:
+The following query-string authentication pattern is obsolete and must not be implemented:
 
 ```text
-Browser
-   |
-   | /preview?path=/about-us&secret=...
-   v
-Next.js Route Handler
-   |
-   | validate secret
-   | validate path
-   | enable Draft Mode
-   v
-redirect("/about-us")
+/preview?path=/about-us&secret=...
 ```
 
-The application must validate the redirect path to prevent open redirect vulnerabilities.
+Preview activation must never transmit the shared preview secret in a URL. URLs may be retained in browser history and server logs or exposed through referrer data.
 
-Preview secrets must not be exposed through client-side code.
+The current CMSJumpstart preview flow uses three endpoints:
 
----
+1. `POST /api/preview-token` — a server-to-server request authenticated with `Authorization: Bearer <secret>`. The endpoint issues a short-lived, signed preview token.
+2. `POST /preview` — receives the token in the request body, validates the token and the configured editor origin, enables Next.js Draft Mode, and redirects to the validated local path.
+3. `POST /exit-preview` — validates the editor origin and local redirect destination, then disables Draft Mode.
+
+The Drupal server must obtain the token and deliver it to the browser through a POST form body. The shared preview secret must remain server-side and must never be included in browser-facing URLs or form fields.
+
+The Drupal-to-Next.js handoff must be implemented and tested separately; the handler implementation alone does not establish that the full editor workflow works end to end.
 
 # Preview Authentication
 
