@@ -17,6 +17,10 @@ import {
   getPreviewCourse
 } from "../../lib/courses";
 
+import {
+  PreviewModeBanner
+} from "../../components/PreviewModeBanner";
+
 interface CoursePageProps {
   params: Promise<{
     id: string;
@@ -93,8 +97,10 @@ async function CourseDetail({
       </Link>
 
       {isPreview && (
-        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Preview mode — showing Drupal working-copy content.
+        <div className="mt-6">
+          <PreviewModeBanner
+            returnPath={`/courses/${id}`}
+          />
         </div>
       )}
 

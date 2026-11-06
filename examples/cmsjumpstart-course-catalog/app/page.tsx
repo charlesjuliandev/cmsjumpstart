@@ -11,6 +11,10 @@ import {
   getPreviewCourses
 } from "./lib/courses";
 
+import {
+  PreviewModeBanner
+} from "./components/PreviewModeBanner";
+
 export default async function HomePage() {
   const { isEnabled: isPreview } =
     await draftMode();
@@ -22,6 +26,9 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
+      {isPreview && (
+        <PreviewModeBanner returnPath="/" />
+      )}
       <header className="mb-10">
         <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">
           CMSJumpstart Example

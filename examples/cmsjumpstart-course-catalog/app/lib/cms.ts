@@ -1,70 +1,45 @@
-import {
-  createNextCMS
-} from "@cmsjumpstart/next";
 
-function getRequiredEnv(
-  name: string
-): string {
-  const value =
-    process.env[name]?.trim();
+import { createNextCMS } from "@cmsjumpstart/next";
 
-  if (!value) {
+const requiredEnv = [
+  "DRUPAL_BASE_URL",
+  "DRUPAL_USERNAME",
+  "DRUPAL_PASSWORD",
+] as const;
+
+for (const name of requiredEnv) {
+  if (!process.env[name]?.trim()) {
     throw new Error(
-      `Missing required environment variable: ${name}`
+      `Missing required environment variable: ${name}`,
     );
   }
-
-  return value;
 }
 
-const drupalBaseUrl =
-  getRequiredEnv(
-    "DRUPAL_BASE_URL"
-  );
+const baseUrl = process.env.DRUPAL_BASE_URL!;
+const username = process.env.DRUPAL_USERNAME!;
+const password = process.env.DRUPAL_PASSWORD!;
 
-const htauthUsername =
-  getRequiredEnv(
-    "DRUPAL_USERNAME"
-  );
+const consumerUuid = process.env.CONSUMERUUID?.trim();
+const apiKey = process.env.API_KEY?.trim();
 
-const htauthPassword =
-  getRequiredEnv(
-    "DRUPAL_PASSWORD"
-  );
+const headers: Record<string, string> = {};
 
-const consumerUuid =
-  getRequiredEnv(
-    "CONSUMERUUID"
-  );
+if (consumerUuid) {
+  headers["X-Consumer-ID"] = consumerUuid;
+}
 
-const apiKey =
-  getRequiredEnv(
-    "API_KEY"
-  );
+if (apiKey) {
+  headers["api-key"] = apiKey;
+}
 
-export const cms =
-  createNextCMS({
-    drupal: {
-      baseUrl:
-        drupalBaseUrl,
-
-      auth: {
-        type: "basic",
-
-        username:
-          htauthUsername,
-
-        password:
-          htauthPassword
-      },
-
-      headers: {
-        "X-Consumer-ID":
-          consumerUuid,
-
-        "api-key":
-          apiKey
-      }
-    }
-  });
-
+export const cms = createNextCMS({
+  drupal: {
+    baseUrl,
+    auth: {
+      type: "basic",
+      username,
+      password,
+    },
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
+  },
+});

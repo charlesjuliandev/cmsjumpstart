@@ -17,6 +17,6 @@ function getRequiredEnv(name: string): string {
 
 export const POST = createExitPreviewHandler({
   allowedOrigin: getRequiredEnv(
-    "CMSJUMPSTART_PREVIEW_ALLOWED_ORIGIN"
+    "CMSJUMPSTART_EXIT_PREVIEW_ALLOWED_ORIGIN"
   )
 });

@@ -54,3 +54,11 @@ export {
 export type {
   ExitPreviewHandlerOptions
 } from "./preview/createExitPreviewHandler.js";
+
+export {
+  createNativePreviewHandler
+} from "./preview/createNativePreviewHandler.js";
+
+export type {
+  NativePreviewHandlerOptions
+} from "./preview/createNativePreviewHandler.js";
